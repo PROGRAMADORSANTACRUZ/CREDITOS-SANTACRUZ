@@ -22,7 +22,7 @@ services:
       timeout: 5s
       retries: 10
 
-  frontend:
+  creditos:
     build:
       context: .
       dockerfile: Dockerfile
