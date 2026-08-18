@@ -19,4 +19,4 @@ RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
 
 EXPOSE 4001
-CMD ["sh", "-c", "node dist/scripts/initDb.js && node dist/index.js"]
+CMD ["sh", "-c", "if [ \"${RUN_DB_INIT:-false}\" = \"true\" ]; then node dist/scripts/initDb.js; fi; node dist/index.js"]
