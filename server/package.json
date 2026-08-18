@@ -9,7 +9,6 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "db:init": "tsx src/scripts/initDb.ts",
-    "db:schema": "SKIP_DB_CREATE=true tsx src/scripts/initDb.ts",
     "crear:admin": "tsx src/scripts/crearAdmin.ts",
     "init:vinculacion": "tsx src/scripts/initVinculacionClientes.ts",
     "init:proveedores": "tsx src/scripts/initRegistroProveedores.ts",

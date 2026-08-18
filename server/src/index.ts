@@ -11,10 +11,6 @@ const app = express()
 app.use(cors({ origin: config.corsOrigin }))
 app.use(express.json({ limit: '10mb' }))
 
-app.get('/api/live', (_req, res) => {
-  res.json({ status: 'ok' })
-})
-
 app.get('/api/health', async (_req, res) => {
   try {
     await query('SELECT 1')
