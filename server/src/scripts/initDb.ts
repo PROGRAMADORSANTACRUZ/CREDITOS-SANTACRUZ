@@ -21,6 +21,7 @@ async function crearBaseSiNoExiste() {
     database: 'postgres',
     user: config.db.user,
     password: config.db.password,
+    connectionTimeoutMillis: 10000,
   })
   await admin.connect()
   const existe = await admin.query(
@@ -55,6 +56,7 @@ async function main() {
     database: config.db.database,
     user: config.db.user,
     password: config.db.password,
+    connectionTimeoutMillis: 10000,
   })
   await client.connect()
 
