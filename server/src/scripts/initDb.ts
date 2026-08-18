@@ -39,7 +39,12 @@ async function crearBaseSiNoExiste() {
 }
 
 async function main() {
-  await crearBaseSiNoExiste()
+  const skipDbCreate = process.env.SKIP_DB_CREATE === 'true'
+  if (!skipDbCreate) {
+    await crearBaseSiNoExiste()
+  } else {
+    console.log('SKIP_DB_CREATE=true: omitiendo creacion/verificacion de base.')
+  }
 
   const rutaSchema = join(__dirname, '..', 'schema.sql')
   const script = await readFile(rutaSchema, 'utf8')
