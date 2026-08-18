@@ -3,6 +3,7 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
+    command: ["node", "dist/index.js"]
     restart: unless-stopped
     environment:
       PORT: 4001
@@ -21,6 +22,10 @@ services:
       interval: 15s
       timeout: 5s
       retries: 10
+    networks:
+      default:
+        aliases:
+          - backend
 
   creditos:
     build:
@@ -34,3 +39,5 @@ services:
         condition: service_healthy
     ports:
       - "8080:80"
+    networks:
+      - default
