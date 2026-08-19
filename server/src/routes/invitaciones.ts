@@ -43,17 +43,31 @@ invitacionesRouter.post(
       try {
         await enviarLinkSolicitud(email, link)
       } catch (err) {
-        // La invitacion queda creada aunque falle el correo; se informa al asesor.
-        res.status(502).json({
-          error:
-            err instanceof Error
-              ? `Invitacion creada pero no se pudo enviar el correo: ${err.message}`
-              : 'No se pudo enviar el correo',
+        // La invitacion queda creada aunque falle el correo. Respondemos 201
+        // (no 502) para que ningun proxy intermedio reemplace el JSON por HTML;
+        // el asesor recibe el enlace para compartirlo manualmente.
+        res.status(201).json({
+          email,
+          nombres,
+          apellidos,
           link,
+          expira: expira.toISOString(),
+          correoEnviado: false,
+          aviso:
+            err instanceof Error
+              ? `No se pudo enviar el correo: ${err.message}. Comparte el enlace manualmente.`
+              : 'No se pudo enviar el correo. Comparte el enlace manualmente.',
         })
         return
       }
-      res.status(201).json({ email, nombres, apellidos, link, expira: expira.toISOString() })
+      res.status(201).json({
+        email,
+        nombres,
+        apellidos,
+        link,
+        expira: expira.toISOString(),
+        correoEnviado: true,
+      })
     } catch (err) {
       next(err)
     }

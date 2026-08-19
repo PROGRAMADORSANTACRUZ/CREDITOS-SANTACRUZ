@@ -115,6 +115,8 @@ export const api = {
     apellidos: string
     link: string
     expira: string
+    correoEnviado?: boolean
+    aviso?: string
   }> {
     return pedir('/invitaciones', { method: 'POST', body: datos })
   },

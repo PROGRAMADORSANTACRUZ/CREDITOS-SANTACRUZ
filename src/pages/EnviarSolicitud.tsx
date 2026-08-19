@@ -22,11 +22,15 @@ export function EnviarSolicitud() {
         apellidos: apellidos.trim(),
       })
       const nombreCompleto = `${res.nombres} ${res.apellidos}`.trim()
+      const destino = nombreCompleto
+        ? `${nombreCompleto} (${res.email})`
+        : res.email
       setMsg({
         tipo: 'ok',
-        texto: nombreCompleto
-          ? `Enlace enviado a ${nombreCompleto} (${res.email}). El cliente recibirá el correo para diligenciar su solicitud.`
-          : `Enlace enviado a ${res.email}. El cliente recibirá el correo para diligenciar su solicitud.`,
+        texto:
+          res.correoEnviado === false
+            ? `Solicitud creada para ${destino}, pero el correo no se pudo enviar. ${res.aviso ?? ''} Copia el enlace de abajo y compártelo con el cliente.`
+            : `Enlace enviado a ${destino}. El cliente recibirá el correo para diligenciar su solicitud.`,
         link: res.link,
       })
       setEmail('')
