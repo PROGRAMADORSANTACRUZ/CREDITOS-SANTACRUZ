@@ -6,6 +6,7 @@ if [ "${RUN_DB_INIT:-false}" = "true" ]; then
   (
     if node /app/server/dist/scripts/initDb.js && \
        node /app/server/dist/scripts/initPermisos.js && \
+       node /app/server/dist/scripts/crearAdmin.js && \
        node /app/server/dist/scripts/initInvitaciones.js && \
        node /app/server/dist/scripts/initVinculacionClientes.js && \
        node /app/server/dist/scripts/initRegistroProveedores.js && \
