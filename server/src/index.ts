@@ -2,6 +2,7 @@ import cors from 'cors'
 import express from 'express'
 import { config } from './config.js'
 import { query } from './db.js'
+import { permisosPorRol, type RolUsuario } from './types.js'
 import { authRouter } from './routes/auth.js'
 import { usuariosRouter } from './routes/usuarios.js'
 import { invitacionesRouter } from './routes/invitaciones.js'
@@ -47,6 +48,47 @@ app.use(
   },
 )
 
+// Garantiza en el arranque los cambios de esquema recientes, para que cualquier
+// despliegue funcione sin ejecutar migraciones manuales (idempotente).
+async function asegurarEsquema(): Promise<void> {
+  await query(
+    "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS permisos JSONB NOT NULL DEFAULT '[]'",
+  )
+  const sinPermisos = await query(
+    "SELECT id, rol FROM usuarios WHERE permisos IS NULL OR permisos = '[]'::jsonb",
+  )
+  for (const u of sinPermisos) {
+    await query('UPDATE usuarios SET permisos = $1::jsonb WHERE id = $2', [
+      JSON.stringify(permisosPorRol(u.rol as RolUsuario)),
+      u.id,
+    ])
+  }
+  await query(
+    "CREATE TABLE IF NOT EXISTS invitaciones_solicitud (" +
+      " id SERIAL PRIMARY KEY," +
+      " token VARCHAR(80) NOT NULL UNIQUE," +
+      " email VARCHAR(150) NOT NULL," +
+      " nombres VARCHAR(150)," +
+      " apellidos VARCHAR(150)," +
+      " estado VARCHAR(20) NOT NULL DEFAULT 'Pendiente'," +
+      " asesor VARCHAR(150)," +
+      " solicitud_id INTEGER REFERENCES vinculacion_clientes(id)," +
+      " fecha_expira TIMESTAMP NOT NULL," +
+      " fecha_uso TIMESTAMP," +
+      " fecha_creacion TIMESTAMP NOT NULL DEFAULT now()" +
+      ")",
+  )
+  await query(
+    'ALTER TABLE invitaciones_solicitud ADD COLUMN IF NOT EXISTS nombres VARCHAR(150)',
+  )
+  await query(
+    'ALTER TABLE invitaciones_solicitud ADD COLUMN IF NOT EXISTS apellidos VARCHAR(150)',
+  )
+}
+
 app.listen(config.port, () => {
   console.log(`CREDITOS API escuchando en http://localhost:${config.port}`)
+  asegurarEsquema().catch((err) => {
+    console.error('No se pudo asegurar el esquema al arrancar:', err)
+  })
 })

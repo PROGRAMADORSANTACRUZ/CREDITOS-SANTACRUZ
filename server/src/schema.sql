@@ -9,5 +9,6 @@ CREATE TABLE IF NOT EXISTS usuarios (
                 CHECK (rol IN ('Administrador', 'Operador', 'Consulta')),
   activo        BOOLEAN      NOT NULL DEFAULT true,
   password_hash VARCHAR(200),
+  permisos      JSONB        NOT NULL DEFAULT '[]',
   fecha_creacion TIMESTAMP   NOT NULL DEFAULT now()
 );
