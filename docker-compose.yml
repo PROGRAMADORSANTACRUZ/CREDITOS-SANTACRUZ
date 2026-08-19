@@ -1,3 +1,26 @@
+x-backend-env: &backend-env
+  PORT: 4001
+  CORS_ORIGIN: ${CORS_ORIGIN:-https://creditos.grupo-santacruz.com}
+  JWT_SECRET: ${JWT_SECRET:-cambia-esta-clave-en-produccion}
+  JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+  SEED_PASSWORD: ${SEED_PASSWORD:-creditos123}
+  DELETE_PASSWORD: ${DELETE_PASSWORD:-eliminar}
+  DB_HOST: ${DB_HOST}
+  DB_PORT: ${DB_PORT:-5432}
+  DB_DATABASE: ${DB_DATABASE:-creditos}
+  DB_USER: ${DB_USER}
+  DB_PASSWORD: ${DB_PASSWORD}
+  APP_URL: ${APP_URL:-https://creditos.grupo-santacruz.com}
+  INVITACION_HORAS: ${INVITACION_HORAS:-24}
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_SECURE: ${SMTP_SECURE:-false}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  SMTP_FROM: ${SMTP_FROM:-}
+  ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@creditos.com}
+  ADMIN_PASSWORD: ${ADMIN_PASSWORD:-123456}
+
 services:
   backend:
     build:
@@ -6,17 +29,7 @@ services:
     command: ["node", "dist/index.js"]
     restart: unless-stopped
     environment:
-      PORT: 4001
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
-      JWT_SECRET: ${JWT_SECRET:-cambia-esta-clave-en-produccion}
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
-      SEED_PASSWORD: ${SEED_PASSWORD:-creditos123}
-      DELETE_PASSWORD: ${DELETE_PASSWORD:-eliminar}
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT:-5432}
-      DB_DATABASE: ${DB_DATABASE:-creditos}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      <<: *backend-env
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4001/api/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 15s
@@ -34,6 +47,9 @@ services:
       args:
         VITE_API_URL: /api
     restart: unless-stopped
+    environment:
+      <<: *backend-env
+      RUN_DB_INIT: ${RUN_DB_INIT:-false}
     depends_on:
       backend:
         condition: service_healthy

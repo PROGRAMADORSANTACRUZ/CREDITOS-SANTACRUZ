@@ -25,6 +25,11 @@ app.get('/api/health', async (_req, res) => {
   }
 })
 
+// Liveness: responde aunque la base de datos no este disponible.
+app.get('/api/live', (_req, res) => {
+  res.json({ status: 'ok' })
+})
+
 // Modulos de creditos (acceso publico, sin login).
 app.use('/api/auth', authRouter)
 app.use('/api/usuarios', usuariosRouter)
