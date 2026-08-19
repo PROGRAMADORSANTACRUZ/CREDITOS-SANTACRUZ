@@ -1,5 +1,6 @@
 import cors from 'cors'
 import express from 'express'
+import bcrypt from 'bcryptjs'
 import { config } from './config.js'
 import { query } from './db.js'
 import { permisosPorRol, type RolUsuario } from './types.js'
@@ -84,6 +85,28 @@ async function asegurarEsquema(): Promise<void> {
   await query(
     'ALTER TABLE invitaciones_solicitud ADD COLUMN IF NOT EXISTS apellidos VARCHAR(150)',
   )
+
+  // Crea un administrador por defecto si no existe ninguno, para que siempre
+  // haya un acceso valido tras un despliegue nuevo.
+  const admins = await query(
+    "SELECT 1 FROM usuarios WHERE rol = 'Administrador' AND activo = true LIMIT 1",
+  )
+  if (admins.length === 0) {
+    const email = process.env.ADMIN_EMAIL ?? 'admin@creditos.com'
+    const nombre = process.env.ADMIN_NOMBRE ?? 'ADMIN'
+    const password = process.env.ADMIN_PASSWORD ?? '123456'
+    const passwordHash = await bcrypt.hash(password, 10)
+    await query(
+      `INSERT INTO usuarios (nombre, email, rol, activo, permisos, password_hash)
+         VALUES ($1, $2, 'Administrador', true, $3::jsonb, $4)
+       ON CONFLICT (email) DO UPDATE
+         SET rol = 'Administrador', activo = true,
+             permisos = EXCLUDED.permisos,
+             password_hash = EXCLUDED.password_hash`,
+      [nombre, email, JSON.stringify(permisosPorRol('Administrador')), passwordHash],
+    )
+    console.log(`Administrador por defecto asegurado: ${email}`)
+  }
 }
 
 app.listen(config.port, () => {
