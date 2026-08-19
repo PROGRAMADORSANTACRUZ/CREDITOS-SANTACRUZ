@@ -21,7 +21,6 @@ async function crearBaseSiNoExiste() {
     database: 'postgres',
     user: config.db.user,
     password: config.db.password,
-    connectionTimeoutMillis: 10000,
   })
   await admin.connect()
   const existe = await admin.query(
@@ -40,12 +39,7 @@ async function crearBaseSiNoExiste() {
 }
 
 async function main() {
-  const skipDbCreate = process.env.SKIP_DB_CREATE === 'true'
-  if (!skipDbCreate) {
-    await crearBaseSiNoExiste()
-  } else {
-    console.log('SKIP_DB_CREATE=true: omitiendo creacion/verificacion de base.')
-  }
+  await crearBaseSiNoExiste()
 
   const rutaSchema = join(__dirname, '..', 'schema.sql')
   const script = await readFile(rutaSchema, 'utf8')
@@ -56,7 +50,6 @@ async function main() {
     database: config.db.database,
     user: config.db.user,
     password: config.db.password,
-    connectionTimeoutMillis: 10000,
   })
   await client.connect()
 
