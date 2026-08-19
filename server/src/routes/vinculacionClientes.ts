@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { query } from '../db.js'
-import { passwordEliminarValida } from '../auth.js'
+import { passwordEliminarValida, requireAuth } from '../auth.js'
 import type { NuevaVinculacionCliente, VinculacionCliente } from '../types.js'
 
 export const vinculacionClientesRouter = Router()
@@ -160,6 +160,52 @@ vinculacionClientesRouter.delete('/:id', async (req, res, next) => {
       return
     }
     res.status(204).end()
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Guarda el analisis de cupo (comite) dentro de datos.analisisCupo y actualiza el
+// estado/observaciones de la solicitud. Requiere sesion iniciada (analista).
+const ESTADOS_DECISION = ['Pendiente', 'Aprobado', 'Aplazado', 'Negado']
+
+vinculacionClientesRouter.put('/:id/analisis', requireAuth, async (req, res, next) => {
+  try {
+    const id = Number(req.params.id)
+    if (!Number.isInteger(id)) {
+      res.status(400).json({ errores: ['id invalido'] })
+      return
+    }
+    const body = req.body as {
+      analisis?: Record<string, unknown>
+      estado?: string
+      observaciones?: string
+    }
+    const estado = (body.estado ?? '').trim() || 'Pendiente'
+    if (!ESTADOS_DECISION.includes(estado)) {
+      res.status(400).json({ error: 'Estado invalido' })
+      return
+    }
+    const analisis = {
+      ...(body.analisis ?? {}),
+      actualizadoPor: req.usuario!.nombre,
+      actualizadoEn: new Date().toISOString(),
+    }
+    const upd = await query(
+      `UPDATE vinculacion_clientes
+          SET estado = $2,
+              observaciones = $3,
+              datos = jsonb_set(
+                COALESCE(datos, '{}'::jsonb), '{analisisCupo}', $4::jsonb, true
+              )
+        WHERE id = $1 RETURNING ${COLS}`,
+      [id, estado, body.observaciones?.trim() || null, JSON.stringify(analisis)],
+    )
+    if (upd.length === 0) {
+      res.status(404).json({ error: 'Registro no encontrado' })
+      return
+    }
+    res.json(map(upd[0]))
   } catch (err) {
     next(err)
   }

@@ -1,12 +1,30 @@
 import type {
+  LoginResponse,
   RegistroActualizacionProveedor,
   RegistroProveedor,
+  Usuario,
   VinculacionCliente,
 } from '../types/trazabilidad'
 
 const API_URL =
   (import.meta.env.VITE_API_URL as string | undefined) ??
   'http://localhost:4001/api'
+
+const TOKEN_KEY = 'creditos_token'
+
+let tokenActual: string | null =
+  typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null
+
+export function setToken(token: string | null): void {
+  tokenActual = token
+  if (typeof localStorage === 'undefined') return
+  if (token) localStorage.setItem(TOKEN_KEY, token)
+  else localStorage.removeItem(TOKEN_KEY)
+}
+
+export function getToken(): string | null {
+  return tokenActual
+}
 
 interface OpcionesPeticion {
   method?: string
@@ -17,12 +35,17 @@ async function pedir<T>(ruta: string, opciones: OpcionesPeticion = {}): Promise<
   const { method = 'GET', body } = opciones
   const headers: Record<string, string> = {}
   if (body !== undefined) headers['Content-Type'] = 'application/json'
+  if (tokenActual) headers['Authorization'] = `Bearer ${tokenActual}`
 
   const res = await fetch(`${API_URL}${ruta}`, {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   })
+
+  if (res.status === 401) {
+    setToken(null)
+  }
 
   if (res.status === 204) return undefined as T
 
@@ -53,6 +76,17 @@ export type NuevoRegistroActualizacionProveedor = Omit<
 >
 
 export const api = {
+  // ------------------------------ Auth ------------------------------
+  login(email: string, password: string): Promise<LoginResponse> {
+    return pedir<LoginResponse>('/auth/login', {
+      method: 'POST',
+      body: { email, password },
+    })
+  },
+  miUsuario(): Promise<Usuario> {
+    return pedir<Usuario>('/auth/me')
+  },
+
   // ---------------------- Vinculacion de clientes ----------------------
   getVinculacionClientes(): Promise<VinculacionCliente[]> {
     return pedir<VinculacionCliente[]>('/vinculacion-clientes')
@@ -78,6 +112,19 @@ export const api = {
     return pedir<void>(`/vinculacion-clientes/${id}`, {
       method: 'DELETE',
       body: { password },
+    })
+  },
+  guardarAnalisisCupo(
+    id: string,
+    payload: {
+      analisis: Record<string, unknown>
+      estado: string
+      observaciones?: string
+    },
+  ): Promise<VinculacionCliente> {
+    return pedir<VinculacionCliente>(`/vinculacion-clientes/${id}/analisis`, {
+      method: 'PUT',
+      body: payload,
     })
   },
 

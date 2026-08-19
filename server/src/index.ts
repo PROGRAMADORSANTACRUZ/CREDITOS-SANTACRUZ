@@ -2,6 +2,7 @@ import cors from 'cors'
 import express from 'express'
 import { config } from './config.js'
 import { query } from './db.js'
+import { authRouter } from './routes/auth.js'
 import { vinculacionClientesRouter } from './routes/vinculacionClientes.js'
 import { registroProveedoresRouter } from './routes/registroProveedores.js'
 import { registroActualizacionProveedoresRouter } from './routes/registroActualizacionProveedores.js'
@@ -9,7 +10,7 @@ import { registroActualizacionProveedoresRouter } from './routes/registroActuali
 const app = express()
 
 app.use(cors({ origin: config.corsOrigin }))
-app.use(express.json({ limit: '10mb' }))
+app.use(express.json({ limit: '50mb' }))
 
 app.get('/api/health', async (_req, res) => {
   try {
@@ -21,6 +22,7 @@ app.get('/api/health', async (_req, res) => {
 })
 
 // Modulos de creditos (acceso publico, sin login).
+app.use('/api/auth', authRouter)
 app.use('/api/vinculacion-clientes', vinculacionClientesRouter)
 app.use('/api/registro-proveedores', registroProveedoresRouter)
 app.use(
