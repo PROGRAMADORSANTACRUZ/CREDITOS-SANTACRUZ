@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Paleta "brand" por defecto (azul). Se puede sobrescribir por empresa
+   asignando estas variables en un contenedor. */
+:root {
+  --brand-50: #eff6ff;
+  --brand-100: #dbeafe;
+  --brand-500: #3b82f6;
+  --brand-600: #2563eb;
+  --brand-700: #1d4ed8;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #f8fafc;
+  color: #0f172a;
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* Todo lo que el usuario digite se muestra en MAYUSCULAS. Solo se excluyen
+   los tipos donde no aplica (fechas, checks, archivos, etc.), las
+   contrasenas y los campos marcados con data-no-upper. */
+input:not([type='password']):not([type='date']):not([type='time']):not([type='datetime-local']):not([type='month']):not([type='week']):not([type='number']):not([type='color']):not([type='range']):not([type='file']):not([type='checkbox']):not([type='radio']):not([data-no-upper]),
+textarea:not([data-no-upper]) {
+  text-transform: uppercase;
+}
+input[data-no-upper],
+textarea[data-no-upper] {
+  text-transform: none;
+}
