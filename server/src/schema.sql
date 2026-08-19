@@ -12,3 +12,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   permisos      JSONB        NOT NULL DEFAULT '[]',
   fecha_creacion TIMESTAMP   NOT NULL DEFAULT now()
 );
+
+-- Columna de permisos (idempotente): garantiza que exista aunque la tabla
+-- usuarios se haya creado antes de introducir los permisos por modulo.
+ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS permisos JSONB NOT NULL DEFAULT '[]';
