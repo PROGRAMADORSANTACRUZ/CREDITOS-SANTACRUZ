@@ -1680,82 +1680,9 @@ export function VinculacionClientes({
             </div>
           </Seccion>
 
-          {/* 9. Beneficiario final */}
-          <Seccion numero={9} titulo="Beneficiario final">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-              <Campo label="Nombre completo" className="md:col-span-2">
-                <input
-                  value={datos.bfNombre}
-                  onChange={(e) => set('bfNombre', e.target.value)}
-                  className={inputClase}
-                />
-              </Campo>
-              <Campo label="Tipo de documento">
-                <select
-                  value={datos.bfTipoDocumento}
-                  onChange={(e) => set('bfTipoDocumento', e.target.value)}
-                  className={inputClase}
-                >
-                  {TIPOS_DOC.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </Campo>
-              <Campo label="Numero">
-                <input
-                  value={datos.bfNumero}
-                  onChange={(e) => set('bfNumero', e.target.value)}
-                  data-no-upper
-                  className={inputClase}
-                />
-              </Campo>
-            </div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-              <Campo label="Fecha de nacimiento">
-                <input
-                  type="date"
-                  value={datos.bfFechaNacimiento}
-                  onChange={(e) => set('bfFechaNacimiento', e.target.value)}
-                  className={inputClase}
-                />
-              </Campo>
-              <Campo label="Nacionalidad">
-                <input
-                  value={datos.bfNacionalidad}
-                  onChange={(e) => set('bfNacionalidad', e.target.value)}
-                  className={inputClase}
-                />
-              </Campo>
-              <Campo label="Pais de residencia">
-                <input
-                  value={datos.bfPaisResidencia}
-                  onChange={(e) => set('bfPaisResidencia', e.target.value)}
-                  className={inputClase}
-                />
-              </Campo>
-              <Campo label="Celular">
-                <input
-                  value={datos.bfCelular}
-                  onChange={(e) => set('bfCelular', e.target.value)}
-                  data-no-upper
-                  className={inputClase}
-                />
-              </Campo>
-            </div>
-            <Campo label="Direccion">
-              <input
-                value={datos.bfDireccion}
-                onChange={(e) => set('bfDireccion', e.target.value)}
-                className={inputClase}
-              />
-            </Campo>
-          </Seccion>
-
-          {/* 10. Documentos requeridos (segun tipo de credito) */}
+          {/* 9. Documentos requeridos (segun tipo de credito) */}
           {docsRequeridos(datos.tipoCredito).length > 0 && (
-            <Seccion numero={10} titulo="Documentos requeridos">
+            <Seccion numero={9} titulo="Documentos requeridos">
               <p className="text-xs text-slate-500">
                 Adjunta cada documento en formato JPG o PDF.
               </p>
