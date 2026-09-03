@@ -49,6 +49,7 @@ interface DocRequerido {
 
 interface FormDatos {
   empresa: string
+  empresas: string[]
   tipoSolicitud: string
   tipoCredito: string
   tipoPersona: string
@@ -434,6 +435,7 @@ function hoy(): string {
 
 const datosVacio = (): FormDatos => ({
   empresa: '',
+  empresas: [],
   tipoSolicitud: '',
   tipoCredito: '',
   tipoPersona: '',
@@ -632,8 +634,30 @@ export function VinculacionClientes({
 
   const esPersonaJuridica = datos.tipoPersona === 'Persona Juridica'
 
+  // Cascada de puntos: cada seccion se habilita al completar la anterior.
+  const compHeader =
+    datos.empresas.length > 0 &&
+    datos.tipoSolicitud !== '' &&
+    datos.tipoCredito !== '' &&
+    datos.tipoPersona !== ''
+  const compGeneral =
+    datos.tipoIdentificacion !== '' &&
+    datos.numeroIdentificacion.trim() !== '' &&
+    datos.nombreRazonSocial.trim() !== '' &&
+    datos.direccion.trim() !== '' &&
+    datos.barrio.trim() !== '' &&
+    datos.email.trim() !== '' &&
+    (!esPersonaJuridica ||
+      (datos.tipoPersonaJuridica.trim() !== '' &&
+        datos.fechaConstitucion.trim() !== ''))
+  const bloqueoResto = !(compHeader && compGeneral)
+  const empresaAutorizaciones = datos.empresas.length
+    ? datos.empresas.map(nombreLegal).join(' / ')
+    : nombreLegal(datos.empresa)
+
   const formValido = useMemo(
     () =>
+      datos.empresas.length > 0 &&
       datos.nombreRazonSocial.trim() !== '' &&
       datos.tipoIdentificacion !== '' &&
       datos.numeroIdentificacion.trim() !== '' &&
@@ -680,6 +704,17 @@ export function VinculacionClientes({
 
   function set<K extends keyof FormDatos>(campo: K, valor: FormDatos[K]) {
     setDatos((prev) => ({ ...prev, [campo]: valor }))
+  }
+
+  // Marca/desmarca una empresa (un cliente puede solicitar a varias).
+  function toggleEmpresa(nombre: string) {
+    setDatos((prev) => {
+      const existe = prev.empresas.includes(nombre)
+      const empresas = existe
+        ? prev.empresas.filter((x) => x !== nombre)
+        : [...prev.empresas, nombre]
+      return { ...prev, empresas, empresa: empresas[0] ?? '' }
+    })
   }
 
   function setAccionista(i: number, campo: keyof Accionista, valor: string) {
@@ -811,6 +846,7 @@ export function VinculacionClientes({
     setDatos({
       ...base,
       ...d,
+      empresas: d.empresas ?? (d.empresa ? [d.empresa] : base.empresas),
       accionistas: d.accionistas ?? base.accionistas,
       referenciasComerciales:
         d.referenciasComerciales ?? base.referenciasComerciales,
@@ -837,6 +873,10 @@ export function VinculacionClientes({
   async function guardar(e: React.FormEvent) {
     e.preventDefault()
     if (guardando) return
+    if (datos.empresas.length === 0) {
+      setErrorForm('Debes seleccionar al menos una empresa para continuar.')
+      return
+    }
     if (!datos.tipoIdentificacion) {
       setErrorForm('Debes seleccionar el tipo de identificacion para continuar.')
       return
@@ -1005,7 +1045,7 @@ export function VinculacionClientes({
         <form onSubmit={guardar} className="space-y-6">
           {/* Encabezado del formulario */}
           <div className="overflow-hidden rounded-xl border border-brand-200 bg-white shadow-sm">
-            <div className="flex items-center gap-4 border-b border-brand-100 bg-brand-50 px-6 py-4">
+            <div className="flex items-center gap-4 bg-brand-50 px-6 py-4">
               <img
                 src="/logo.jpg"
                 alt="Carnes Santacruz"
@@ -1021,79 +1061,91 @@ export function VinculacionClientes({
                 </p>
               </div>
             </div>
-
-            <div className="space-y-4 p-6">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <Campo label="Fecha Solicitud Credito">
-                  <input
-                    type="date"
-                    value={datos.fecha}
-                    readOnly
-                    className={`${inputClase} bg-slate-100 text-slate-600`}
-                  />
-                </Campo>
-                <Campo label="Empresa">
-                  <select
-                    value={datos.empresa}
-                    onChange={(e) => set('empresa', e.target.value)}
-                    className={inputClase}
-                  >
-                    <option value="">Seleccione...</option>
-                    {EMPRESAS.map((op) => (
-                      <option key={op} value={op}>
-                        {op}
-                      </option>
-                    ))}
-                  </select>
-                </Campo>
-                <Campo label="Tipo de solicitud">
-                  <select
-                    value={datos.tipoSolicitud}
-                    onChange={(e) => set('tipoSolicitud', e.target.value)}
-                    className={inputClase}
-                  >
-                    <option value="">Seleccione...</option>
-                    {TIPOS_SOLICITUD.map((op) => (
-                      <option key={op} value={op}>
-                        {op}
-                      </option>
-                    ))}
-                  </select>
-                </Campo>
-                <Campo label="Tipo de credito solicitado">
-                  <select
-                    value={datos.tipoCredito}
-                    onChange={(e) => set('tipoCredito', e.target.value)}
-                    className={inputClase}
-                  >
-                    <option value="">Seleccione...</option>
-                    {TIPOS_CREDITO.map((op) => (
-                      <option key={op} value={op}>
-                        {op}
-                      </option>
-                    ))}
-                  </select>
-                </Campo>
-                <Campo label="Tipo de persona">
-                  <select
-                    value={datos.tipoPersona}
-                    onChange={(e) => set('tipoPersona', e.target.value)}
-                    className={inputClase}
-                  >
-                    <option value="">Seleccione...</option>
-                    {TIPOS_PERSONA.map((op) => (
-                      <option key={op} value={op}>
-                        {op}
-                      </option>
-                    ))}
-                  </select>
-                </Campo>
-              </div>
-            </div>
           </div>
 
-          {/* 1. Informacion general */}
-          <Seccion numero={1} titulo="Informacion general">
+          {/* 1. Datos de la solicitud */}
+          <Seccion numero={1} titulo="Datos de la solicitud">
+            <Campo label="Empresas a las que solicita el credito">
+              <div className="flex flex-wrap gap-2">
+                {EMPRESAS.map((op) => {
+                  const activo = datos.empresas.includes(op)
+                  return (
+                    <label
+                      key={op}
+                      className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                        activo
+                          ? 'border-brand-600 bg-brand-50 text-brand-700'
+                          : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={activo}
+                        onChange={() => toggleEmpresa(op)}
+                        className="h-4 w-4 accent-brand-600"
+                      />
+                      {op}
+                    </label>
+                  )
+                })}
+              </div>
+            </Campo>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Campo label="Fecha Solicitud Credito">
+                <input
+                  type="date"
+                  value={datos.fecha}
+                  readOnly
+                  className={`${inputClase} bg-slate-100 text-slate-600`}
+                />
+              </Campo>
+              <Campo label="Tipo de solicitud">
+                <select
+                  value={datos.tipoSolicitud}
+                  onChange={(e) => set('tipoSolicitud', e.target.value)}
+                  className={inputClase}
+                >
+                  <option value="">Seleccione...</option>
+                  {TIPOS_SOLICITUD.map((op) => (
+                    <option key={op} value={op}>
+                      {op}
+                    </option>
+                  ))}
+                </select>
+              </Campo>
+              <Campo label="Tipo de credito solicitado">
+                <select
+                  value={datos.tipoCredito}
+                  onChange={(e) => set('tipoCredito', e.target.value)}
+                  className={inputClase}
+                >
+                  <option value="">Seleccione...</option>
+                  {TIPOS_CREDITO.map((op) => (
+                    <option key={op} value={op}>
+                      {op}
+                    </option>
+                  ))}
+                </select>
+              </Campo>
+              <Campo label="Tipo de persona">
+                <select
+                  value={datos.tipoPersona}
+                  onChange={(e) => set('tipoPersona', e.target.value)}
+                  className={inputClase}
+                >
+                  <option value="">Seleccione...</option>
+                  {TIPOS_PERSONA.map((op) => (
+                    <option key={op} value={op}>
+                      {op}
+                    </option>
+                  ))}
+                </select>
+              </Campo>
+            </div>
+          </Seccion>
+
+          {/* 2. Informacion general */}
+          <Seccion numero={2} titulo="Informacion general" bloqueada={!compHeader}>
             <h4 className="text-sm font-semibold text-slate-700">
               {esPersonaJuridica ? 'Datos de la empresa' : 'Datos personales'}
             </h4>
@@ -1395,9 +1447,10 @@ export function VinculacionClientes({
             )}
           </Seccion>
 
-          {/* 2. Accionistas */}
+          {/* 3. Accionistas */}
           <Seccion
-            numero={2}
+            numero={3}
+            bloqueada={bloqueoResto}
             titulo={`Accionistas o asociados (mas del 5% de participacion)${
               esPersonaJuridica ? '' : ' — No aplica para persona natural (opcional)'
             }`}
@@ -1458,8 +1511,8 @@ export function VinculacionClientes({
             </div>
           </Seccion>
 
-          {/* 3. Informacion tributaria */}
-          <Seccion numero={3} titulo="Informacion tributaria">
+          {/* 4. Informacion tributaria */}
+          <Seccion numero={4} titulo="Informacion tributaria" bloqueada={bloqueoResto}>
             <Campo label="Tipo de actividad">
               <Pills
                 opciones={TIPOS_ACTIVIDAD}
@@ -1571,7 +1624,7 @@ export function VinculacionClientes({
           </Seccion>
 
           {/* 4. Facturacion electronica */}
-          <Seccion numero={4} titulo="Informacion para facturacion electronica">
+          <Seccion numero={5} titulo="Informacion para facturacion electronica" bloqueada={bloqueoResto}>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <Campo label="E-mail para factura electronica">
                 <input
@@ -1600,7 +1653,7 @@ export function VinculacionClientes({
           </Seccion>
 
           {/* 5. Datos de contacto comercial / pagos */}
-          <Seccion numero={5} titulo="Datos de contacto comercial">
+          <Seccion numero={6} titulo="Datos de contacto comercial" bloqueada={bloqueoResto}>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.6fr_1fr_0.85fr_0.9fr]">
               <Campo label="Persona encargada de compras/pagos">
                 <input
@@ -1636,7 +1689,7 @@ export function VinculacionClientes({
           </Seccion>
 
           {/* 6. Referencias */}
-          <Seccion numero={6} titulo="Referencias">
+          <Seccion numero={7} titulo="Referencias" bloqueada={bloqueoResto}>
             <ListaReferencias
               titulo="Comerciales"
               refs={datos.referenciasComerciales}
@@ -1654,7 +1707,7 @@ export function VinculacionClientes({
           </Seccion>
 
           {/* 7. Informacion financiera */}
-          <Seccion numero={7} titulo="Informacion financiera">
+          <Seccion numero={8} titulo="Informacion financiera" bloqueada={bloqueoResto}>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <Campo label="Activos $">
                 <input
@@ -1739,7 +1792,7 @@ export function VinculacionClientes({
           </Seccion>
 
           {/* 8. PEP */}
-          <Seccion numero={8} titulo="Persona Expuesta Políticamente (PEP)">
+          <Seccion numero={9} titulo="Persona Expuesta Políticamente (PEP)" bloqueada={bloqueoResto}>
             <p className="text-xs text-slate-500">
               Marca la opción que corresponda. Si respondes “Sí”, completa la
               información solicitada.
@@ -1973,7 +2026,7 @@ export function VinculacionClientes({
           </Seccion>
 
           {/* 9. Autorizaciones */}
-          <Seccion numero={9} titulo="Autorizaciones y declaraciones">
+          <Seccion numero={10} titulo="Autorizaciones y declaraciones" bloqueada={bloqueoResto}>
             <p className="mb-3 text-xs text-slate-500">
               Debes abrir y aceptar cada una de las siguientes autorizaciones y
               declaraciones para poder guardar la solicitud.
@@ -2014,7 +2067,7 @@ export function VinculacionClientes({
 
           {/* 10. Documentos requeridos (segun tipo de credito) */}
           {docsRequeridos(datos.tipoCredito).length > 0 && (
-            <Seccion numero={10} titulo="Documentos requeridos">
+            <Seccion numero={11} titulo="Documentos requeridos" bloqueada={bloqueoResto}>
               <p className="text-xs text-slate-500">
                 Adjunta cada documento en formato JPG o PDF.
               </p>
@@ -2144,7 +2197,7 @@ export function VinculacionClientes({
           }}
           onCerrar={() => setModalDatos(false)}
         >
-          <CuerpoDatos empresa={nombreLegal(datos.empresa)} />
+          <CuerpoDatos empresa={empresaAutorizaciones} />
         </ModalAutorizacion>
       )}
 
@@ -2163,7 +2216,7 @@ export function VinculacionClientes({
           }}
           onCerrar={() => setModalCentrales(false)}
         >
-          <CuerpoCentrales empresa={nombreLegal(datos.empresa)} />
+          <CuerpoCentrales empresa={empresaAutorizaciones} />
         </ModalAutorizacion>
       )}
 
@@ -2181,7 +2234,7 @@ export function VinculacionClientes({
           }}
           onCerrar={() => setModalFondos(false)}
         >
-          <CuerpoFondos empresa={nombreLegal(datos.empresa)} />
+          <CuerpoFondos empresa={empresaAutorizaciones} />
         </ModalAutorizacion>
       )}
 
@@ -2199,7 +2252,7 @@ export function VinculacionClientes({
           }}
           onCerrar={() => setModalListas(false)}
         >
-          <CuerpoListas empresa={nombreLegal(datos.empresa)} />
+          <CuerpoListas empresa={empresaAutorizaciones} />
         </ModalAutorizacion>
       )}
 
@@ -2217,7 +2270,7 @@ export function VinculacionClientes({
           }}
           onCerrar={() => setModalIntegral(false)}
         >
-          <CuerpoIntegral empresa={nombreLegal(datos.empresa)} />
+          <CuerpoIntegral empresa={empresaAutorizaciones} />
         </ModalAutorizacion>
       )}
 
@@ -2235,7 +2288,7 @@ export function VinculacionClientes({
           }}
           onCerrar={() => setModalTrazabilidad(false)}
         >
-          <CuerpoTrazabilidad empresa={nombreLegal(datos.empresa)} />
+          <CuerpoTrazabilidad empresa={empresaAutorizaciones} />
         </ModalAutorizacion>
       )}
 
@@ -2382,20 +2435,37 @@ function Seccion({
   numero,
   titulo,
   children,
+  bloqueada,
 }: {
   numero: number
   titulo: string
   children: ReactNode
+  bloqueada?: boolean
 }) {
   return (
     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50 px-6 py-3">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
+        <span
+          className={`flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold text-white ${
+            bloqueada ? 'bg-slate-400' : 'bg-brand-600'
+          }`}
+        >
           {numero}
         </span>
         <h3 className="text-base font-semibold text-slate-800">{titulo}</h3>
+        {bloqueada && (
+          <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-slate-400">
+            🔒 Completa el punto anterior para continuar
+          </span>
+        )}
       </div>
-      <div className="space-y-4 p-6">{children}</div>
+      <div
+        className={`space-y-4 p-6 ${
+          bloqueada ? 'pointer-events-none select-none opacity-50' : ''
+        }`}
+      >
+        {children}
+      </div>
     </section>
   )
 }
