@@ -167,13 +167,6 @@ function nombreLegal(empresa: string): string {
 }
 
 // Color de resaltado por empresa cuando esta seleccionada.
-const COLORES_EMPRESA: Record<string, string> = {
-  'Carnes Santacruz SAS': 'border-[#c1122f] bg-[#c1122f] text-white',
-  'Agropecuaria Santacruz Ltda': 'border-[#4a7c1f] bg-[#4a7c1f] text-white',
-  'Inversiones Serrano Millan': 'border-[#6d1a2e] bg-[#6d1a2e] text-white',
-  'Agroporcicola Santacruz': 'border-pink-500 bg-pink-500 text-white',
-}
-
 // Tema (paleta brand) que adopta el formulario segun la empresa seleccionada.
 const TEMA_EMPRESA: Record<string, Record<string, string>> = {
   'Carnes Santacruz SAS': {
@@ -212,12 +205,7 @@ const TEMA_EMPRESA: Record<string, Record<string, string>> = {
     '--brand-700': '#1d4ed8',
   },
 }
-const TIPOS_SOLICITUD = [
-  'Contado',
-  'Credito',
-  'Actualizacion Datos',
-  'Ampliacion de Cupo',
-]
+const TIPOS_SOLICITUD = ['Contado', 'Credito']
 const TIPOS_CREDITO = [
   'Express - 1 SMMLV - de 1 a 3 dias',
   'Santacruz - 2 a 10 SMMLV - de 8 a 15 dias',
@@ -937,43 +925,70 @@ export function VinculacionClientes({
             </div>
 
             <div className="space-y-4 p-6">
-              <Campo label="Empresa">
-                <Pills
-                  opciones={EMPRESAS}
-                  value={datos.empresa}
-                  onChange={(v) => set('empresa', v)}
-                  colores={COLORES_EMPRESA}
-                />
-              </Campo>
-              <Campo label="Tipo de solicitud">
-                <Pills
-                  opciones={TIPOS_SOLICITUD}
-                  value={datos.tipoSolicitud}
-                  onChange={(v) => set('tipoSolicitud', v)}
-                />
-              </Campo>
-              <Campo label="Tipo de credito solicitado">
-                <Pills
-                  opciones={TIPOS_CREDITO}
-                  value={datos.tipoCredito}
-                  onChange={(v) => set('tipoCredito', v)}
-                />
-              </Campo>
-              <Campo label="Tipo de persona">
-                <Pills
-                  opciones={TIPOS_PERSONA}
-                  value={datos.tipoPersona}
-                  onChange={(v) => set('tipoPersona', v)}
-                />
-              </Campo>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <Campo label="Fecha Solicitud Credito">
                   <input
                     type="date"
                     value={datos.fecha}
-                    onChange={(e) => set('fecha', e.target.value)}
-                    className={inputClase}
+                    readOnly
+                    className={`${inputClase} bg-slate-100 text-slate-600`}
                   />
+                </Campo>
+                <Campo label="Empresa">
+                  <select
+                    value={datos.empresa}
+                    onChange={(e) => set('empresa', e.target.value)}
+                    className={inputClase}
+                  >
+                    <option value="">Seleccione...</option>
+                    {EMPRESAS.map((op) => (
+                      <option key={op} value={op}>
+                        {op}
+                      </option>
+                    ))}
+                  </select>
+                </Campo>
+                <Campo label="Tipo de solicitud">
+                  <select
+                    value={datos.tipoSolicitud}
+                    onChange={(e) => set('tipoSolicitud', e.target.value)}
+                    className={inputClase}
+                  >
+                    <option value="">Seleccione...</option>
+                    {TIPOS_SOLICITUD.map((op) => (
+                      <option key={op} value={op}>
+                        {op}
+                      </option>
+                    ))}
+                  </select>
+                </Campo>
+                <Campo label="Tipo de credito solicitado">
+                  <select
+                    value={datos.tipoCredito}
+                    onChange={(e) => set('tipoCredito', e.target.value)}
+                    className={inputClase}
+                  >
+                    <option value="">Seleccione...</option>
+                    {TIPOS_CREDITO.map((op) => (
+                      <option key={op} value={op}>
+                        {op}
+                      </option>
+                    ))}
+                  </select>
+                </Campo>
+                <Campo label="Tipo de persona">
+                  <select
+                    value={datos.tipoPersona}
+                    onChange={(e) => set('tipoPersona', e.target.value)}
+                    className={inputClase}
+                  >
+                    <option value="">Seleccione...</option>
+                    {TIPOS_PERSONA.map((op) => (
+                      <option key={op} value={op}>
+                        {op}
+                      </option>
+                    ))}
+                  </select>
                 </Campo>
               </div>
             </div>
