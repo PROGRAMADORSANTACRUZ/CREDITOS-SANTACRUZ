@@ -32,16 +32,38 @@ invitacionesRouter.post(
       }
       const nombres = ((req.body?.nombres as string | undefined) ?? '').trim()
       const apellidos = ((req.body?.apellidos as string | undefined) ?? '').trim()
+      const tipo =
+        req.body?.tipo === 'actualizacion' ? 'actualizacion' : 'solicitud'
+      const solicitudId =
+        tipo === 'actualizacion' ? Number(req.body?.solicitudId) : null
+      if (
+        tipo === 'actualizacion' &&
+        (!solicitudId || Number.isNaN(solicitudId))
+      ) {
+        res.status(400).json({
+          error: 'Debes seleccionar la solicitud del cliente a actualizar',
+        })
+        return
+      }
       const token = randomBytes(24).toString('hex')
       const expira = new Date(Date.now() + config.invitacionHoras * 3600 * 1000)
       await query(
-        `INSERT INTO invitaciones_solicitud (token, email, nombres, apellidos, asesor, fecha_expira)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-        [token, email, nombres || null, apellidos || null, req.usuario!.nombre, expira],
+        `INSERT INTO invitaciones_solicitud (token, email, nombres, apellidos, asesor, fecha_expira, tipo, solicitud_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [
+          token,
+          email,
+          nombres || null,
+          apellidos || null,
+          req.usuario!.nombre,
+          expira,
+          tipo,
+          solicitudId,
+        ],
       )
       const link = `${config.appUrl}/solicitud/${token}`
       try {
-        await enviarLinkSolicitud(email, link)
+        await enviarLinkSolicitud(email, link, tipo)
       } catch (err) {
         // La invitacion queda creada aunque falle el correo. Respondemos 201
         // (no 502) para que ningun proxy intermedio reemplace el JSON por HTML;
@@ -50,6 +72,7 @@ invitacionesRouter.post(
           email,
           nombres,
           apellidos,
+          tipo,
           link,
           expira: expira.toISOString(),
           correoEnviado: false,
@@ -64,6 +87,7 @@ invitacionesRouter.post(
         email,
         nombres,
         apellidos,
+        tipo,
         link,
         expira: expira.toISOString(),
         correoEnviado: true,
@@ -74,12 +98,37 @@ invitacionesRouter.post(
   },
 )
 
+// Lista de clientes con solicitud registrada, para elegir a quien enviar un
+// link de actualizacion de datos (Asesor/Admin).
+invitacionesRouter.get(
+  '/clientes',
+  requireAuth,
+  requirePermiso('enviar-solicitud'),
+  async (_req, res, next) => {
+    try {
+      const filas = await query(
+        `SELECT id, cliente, documento, consecutivo,
+                COALESCE(datos->>'email', '') AS email
+           FROM vinculacion_clientes
+          ORDER BY cliente ASC`,
+      )
+      res.json(filas)
+    } catch (err) {
+      next(err)
+    }
+  },
+)
+
 // Valida un token (uso publico por el cliente).
 invitacionesRouter.get('/:token', async (req, res, next) => {
   try {
     const filas = await query(
-      `SELECT email, nombres, apellidos, estado, fecha_expira
-         FROM invitaciones_solicitud WHERE token = $1`,
+      `SELECT i.email, i.nombres, i.apellidos, i.estado, i.fecha_expira,
+              i.tipo, i.solicitud_id,
+              v.datos AS datos_previos, v.cliente AS cliente_previo
+         FROM invitaciones_solicitud i
+         LEFT JOIN vinculacion_clientes v ON v.id = i.solicitud_id
+        WHERE i.token = $1`,
       [req.params.token],
     )
     const inv = filas[0]
@@ -95,10 +144,15 @@ invitacionesRouter.get('/:token', async (req, res, next) => {
       res.status(410).json({ error: 'Este enlace ha expirado' })
       return
     }
+    const tipo = (inv.tipo as string) ?? 'solicitud'
     res.json({
       email: inv.email,
       nombres: inv.nombres ?? '',
       apellidos: inv.apellidos ?? '',
+      tipo,
+      datosPrevios:
+        tipo === 'actualizacion' ? (inv.datos_previos ?? null) : null,
+      clientePrevio: inv.cliente_previo ?? '',
       valido: true,
     })
   } catch (err) {
@@ -112,7 +166,7 @@ invitacionesRouter.post('/:token/solicitud', async (req, res, next) => {
   try {
     const token = req.params.token
     const filas = await query(
-      `SELECT id, estado, fecha_expira
+      `SELECT id, estado, fecha_expira, tipo, solicitud_id
          FROM invitaciones_solicitud WHERE token = $1 FOR UPDATE`,
       [token],
     )
@@ -133,6 +187,41 @@ invitacionesRouter.post('/:token/solicitud', async (req, res, next) => {
     const body = req.body as Partial<NuevaVinculacionCliente>
     if (!body.cliente || !body.cliente.trim()) {
       res.status(400).json({ errores: ['cliente es obligatorio'] })
+      return
+    }
+
+    // Actualizacion de datos: sobrescribe la solicitud existente (no crea nueva).
+    if (inv.tipo === 'actualizacion' && inv.solicitud_id) {
+      const upd = await query(
+        `UPDATE vinculacion_clientes
+            SET fecha = COALESCE($2, fecha),
+                cliente = $3,
+                documento = $4,
+                telefono = $5,
+                direccion = $6,
+                tipo_persona = $7,
+                datos = $8::jsonb
+          WHERE id = $1
+        RETURNING consecutivo`,
+        [
+          inv.solicitud_id,
+          body.fecha || null,
+          body.cliente.trim(),
+          body.documento?.trim() || null,
+          body.telefono?.trim() || null,
+          body.direccion?.trim() || null,
+          body.tipoPersona?.trim() || null,
+          JSON.stringify(body.datos ?? {}),
+        ],
+      )
+      const consecutivo = (upd[0] as { consecutivo: string })?.consecutivo ?? ''
+      await query(
+        `UPDATE invitaciones_solicitud
+            SET estado = 'Usada', fecha_uso = now()
+          WHERE id = $1`,
+        [inv.id],
+      )
+      res.status(201).json({ ok: true, consecutivo, actualizacion: true })
       return
     }
 

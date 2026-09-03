@@ -109,10 +109,13 @@ export const api = {
     email: string
     nombres?: string
     apellidos?: string
+    tipo?: 'solicitud' | 'actualizacion'
+    solicitudId?: string
   }): Promise<{
     email: string
     nombres: string
     apellidos: string
+    tipo?: string
     link: string
     expira: string
     correoEnviado?: boolean
@@ -120,10 +123,18 @@ export const api = {
   }> {
     return pedir('/invitaciones', { method: 'POST', body: datos })
   },
+  clientesParaActualizar(): Promise<
+    { id: string; cliente: string; documento: string; consecutivo: string; email: string }[]
+  > {
+    return pedir('/invitaciones/clientes')
+  },
   validarInvitacion(token: string): Promise<{
     email: string
     nombres: string
     apellidos: string
+    tipo?: string
+    datosPrevios?: Record<string, unknown> | null
+    clientePrevio?: string
     valido: boolean
   }> {
     return pedir(`/invitaciones/${token}`)

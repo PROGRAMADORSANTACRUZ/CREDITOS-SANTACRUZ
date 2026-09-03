@@ -564,6 +564,8 @@ const inputClase =
 export interface ModoPublico {
   token: string
   emailCliente?: string
+  tipo?: 'solicitud' | 'actualizacion'
+  datosPrevios?: Record<string, unknown> | null
   onEnviado: (consecutivo: string) => void
 }
 
@@ -615,10 +617,23 @@ export function VinculacionClientes({
 
   useEffect(() => {
     if (modoPublico) {
-      // El cliente solo diligencia su formulario; no se carga el listado.
+      // El cliente solo diligencia su formulario; no se carga el listado. En
+      // modo actualizacion se precarga el formulario que diligencio antes.
+      const base = datosVacio()
+      const prev = (modoPublico.datosPrevios ?? {}) as Partial<FormDatos>
       setDatos(() => ({
-        ...datosVacio(),
-        email: modoPublico.emailCliente ?? '',
+        ...base,
+        ...prev,
+        empresas: prev.empresas ?? base.empresas,
+        accionistas: prev.accionistas ?? base.accionistas,
+        referenciasComerciales:
+          prev.referenciasComerciales ?? base.referenciasComerciales,
+        referenciasPersonales:
+          prev.referenciasPersonales ?? base.referenciasPersonales,
+        pepFamiliares: prev.pepFamiliares ?? base.pepFamiliares,
+        pepOrigenRecursos: prev.pepOrigenRecursos ?? base.pepOrigenRecursos,
+        documentos: prev.documentos ?? base.documentos,
+        email: prev.email || (modoPublico.emailCliente ?? ''),
       }))
       setEstado('Pendiente')
       setMostrarForm(true)
@@ -629,6 +644,7 @@ export function VinculacionClientes({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  const esActualizacion = modoPublico?.tipo === 'actualizacion'
   const esPersonaJuridica = datos.tipoPersona === 'Persona Juridica'
 
   // Cascada de puntos: cada seccion se habilita al completar la anterior.
@@ -1013,7 +1029,7 @@ export function VinculacionClientes({
       <header className="flex items-end justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">
-            Solicitud de credito
+            {esActualizacion ? 'Actualización de datos' : 'Solicitud de credito'}
           </h2>
           <p className="text-slate-500">
             Formato F-FIN-01 &mdash; Carnes Santacruz S.A.S.
@@ -1050,8 +1066,9 @@ export function VinculacionClientes({
               />
               <div>
                 <h3 className="text-lg font-bold text-slate-900">
-                  {editandoId ? 'Editar solicitud' : 'Nueva solicitud'} de
-                  credito
+                  {esActualizacion
+                    ? 'Actualización de datos'
+                    : `${editandoId ? 'Editar solicitud' : 'Nueva solicitud'} de credito`}
                 </h3>
                 <p className="text-xs text-slate-500">
                   F-FIN-01 &middot; Version 01
@@ -1062,6 +1079,12 @@ export function VinculacionClientes({
 
           {/* 1. Datos de la solicitud */}
           <Seccion numero={1} titulo="Datos de la solicitud">
+            {esActualizacion && (
+              <p className="rounded-md bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
+                Actualización de datos: puedes modificar tu información, pero no
+                la empresa ni el tipo de crédito de tu solicitud.
+              </p>
+            )}
             <Campo label="Empresas a las que solicita el credito">
               <div className="flex flex-wrap gap-2">
                 {EMPRESAS.map((op) => {
@@ -1069,7 +1092,11 @@ export function VinculacionClientes({
                   return (
                     <label
                       key={op}
-                      className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                      className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                        esActualizacion
+                          ? 'cursor-not-allowed opacity-70'
+                          : 'cursor-pointer'
+                      } ${
                         activo
                           ? 'border-brand-600 bg-brand-50 text-brand-700'
                           : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
@@ -1078,6 +1105,7 @@ export function VinculacionClientes({
                       <input
                         type="checkbox"
                         checked={activo}
+                        disabled={esActualizacion}
                         onChange={() => toggleEmpresa(op)}
                         className="h-4 w-4 accent-brand-600"
                       />
@@ -1100,7 +1128,8 @@ export function VinculacionClientes({
                 <select
                   value={datos.tipoSolicitud}
                   onChange={(e) => set('tipoSolicitud', e.target.value)}
-                  className={inputClase}
+                  disabled={esActualizacion}
+                  className={`${inputClase} disabled:bg-slate-100 disabled:text-slate-500`}
                 >
                   <option value="">Seleccione...</option>
                   {TIPOS_SOLICITUD.map((op) => (
@@ -1114,7 +1143,8 @@ export function VinculacionClientes({
                 <select
                   value={datos.tipoCredito}
                   onChange={(e) => set('tipoCredito', e.target.value)}
-                  className={inputClase}
+                  disabled={esActualizacion}
+                  className={`${inputClase} disabled:bg-slate-100 disabled:text-slate-500`}
                 >
                   <option value="">Seleccione...</option>
                   {TIPOS_CREDITO.map((op) => (
@@ -2168,7 +2198,9 @@ export function VinculacionClientes({
                   {guardando
                     ? 'Guardando...'
                     : modoPublico
-                      ? 'Enviar solicitud'
+                      ? esActualizacion
+                        ? 'Guardar actualización'
+                        : 'Enviar solicitud'
                       : editandoId
                         ? 'Guardar cambios'
                         : 'Realizar solicitud'}

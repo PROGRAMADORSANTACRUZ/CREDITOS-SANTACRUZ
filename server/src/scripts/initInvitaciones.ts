@@ -23,6 +23,9 @@ async function main() {
   await query(
     'ALTER TABLE invitaciones_solicitud ADD COLUMN IF NOT EXISTS apellidos VARCHAR(150)',
   )
+  await query(
+    "ALTER TABLE invitaciones_solicitud ADD COLUMN IF NOT EXISTS tipo VARCHAR(20) NOT NULL DEFAULT 'solicitud'",
+  )
   console.log('Tabla invitaciones_solicitud lista')
   await pool.end()
 }

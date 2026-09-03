@@ -11,6 +11,11 @@ export function SolicitudPublica() {
   const [email, setEmail] = useState('')
   const [mensaje, setMensaje] = useState('')
   const [consecutivo, setConsecutivo] = useState('')
+  const [tipo, setTipo] = useState<'solicitud' | 'actualizacion'>('solicitud')
+  const [datosPrevios, setDatosPrevios] = useState<Record<
+    string,
+    unknown
+  > | null>(null)
 
   useEffect(() => {
     let activo = true
@@ -19,6 +24,8 @@ export function SolicitudPublica() {
       .then((res) => {
         if (!activo) return
         setEmail(res.email)
+        setTipo(res.tipo === 'actualizacion' ? 'actualizacion' : 'solicitud')
+        setDatosPrevios(res.datosPrevios ?? null)
         setEstado('valido')
       })
       .catch((err: unknown) => {
@@ -78,13 +85,24 @@ export function SolicitudPublica() {
             </svg>
           </div>
           <h1 className="mb-3 text-2xl font-bold text-slate-900">
-            ¡Solicitud enviada con éxito!
+            {tipo === 'actualizacion'
+              ? '¡Datos actualizados con éxito!'
+              : '¡Solicitud enviada con éxito!'}
           </h1>
           <p className="text-base leading-relaxed text-slate-600">
-            Su solicitud será revisada en un plazo máximo de{' '}
-            <strong>24 horas</strong>. Por favor, esté pendiente de su{' '}
-            <strong>correo electrónico</strong> o de una{' '}
-            <strong>llamada telefónica</strong>.
+            {tipo === 'actualizacion' ? (
+              <>
+                Hemos recibido la actualización de tu información. Gracias por
+                mantener tus datos al día.
+              </>
+            ) : (
+              <>
+                Su solicitud será revisada en un plazo máximo de{' '}
+                <strong>24 horas</strong>. Por favor, esté pendiente de su{' '}
+                <strong>correo electrónico</strong> o de una{' '}
+                <strong>llamada telefónica</strong>.
+              </>
+            )}
           </p>
           {consecutivo && (
             <p className="mt-5 inline-block rounded-full bg-slate-100 px-4 py-1.5 text-sm font-medium text-slate-500">
@@ -106,6 +124,8 @@ export function SolicitudPublica() {
           modoPublico={{
             token,
             emailCliente: email,
+            tipo,
+            datosPrevios,
             onEnviado: (cons) => {
               setConsecutivo(cons)
               setEstado('enviado')

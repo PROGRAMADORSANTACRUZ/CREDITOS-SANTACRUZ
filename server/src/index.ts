@@ -90,6 +90,9 @@ async function asegurarEsquema(): Promise<void> {
   await query(
     'ALTER TABLE invitaciones_solicitud ADD COLUMN IF NOT EXISTS apellidos VARCHAR(150)',
   )
+  await query(
+    "ALTER TABLE invitaciones_solicitud ADD COLUMN IF NOT EXISTS tipo VARCHAR(20) NOT NULL DEFAULT 'solicitud'",
+  )
 
   // Crea un administrador por defecto si no existe ninguno, para que siempre
   // haya un acceso valido tras un despliegue nuevo.
