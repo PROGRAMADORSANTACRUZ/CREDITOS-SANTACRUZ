@@ -245,7 +245,6 @@ const DOCS_POR_CREDITO: { prefijo: string; docs: DocRequerido[] }[] = [
   {
     prefijo: 'Express',
     docs: [
-      { id: 'formularioVinculacion', label: 'Formulario vinculacion' },
       {
         id: 'docIdentificacion',
         label: 'Fotocopia documento de identificacion',
@@ -260,7 +259,6 @@ const DOCS_POR_CREDITO: { prefijo: string; docs: DocRequerido[] }[] = [
   {
     prefijo: 'Santacruz',
     docs: [
-      { id: 'formularioVinculacion', label: 'Formulario vinculacion' },
       {
         id: 'docIdentificacion',
         label: 'Fotocopia documento de identificacion',
@@ -285,7 +283,6 @@ const DOCS_POR_CREDITO: { prefijo: string; docs: DocRequerido[] }[] = [
   {
     prefijo: 'Especial',
     docs: [
-      { id: 'formularioVinculacion', label: 'Formulario vinculacion' },
       {
         id: 'docIdentificacion',
         label: 'Fotocopia documento de identificacion',
