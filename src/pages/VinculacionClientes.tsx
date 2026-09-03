@@ -1118,9 +1118,10 @@ export function VinculacionClientes({
               </Campo>
             </div>
             <h4 className="pt-2 text-sm font-semibold text-slate-700">
-              Datos representante legal
+              {esPersonaJuridica ? 'Datos representante legal' : 'Documento de identidad'}
             </h4>
             <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-4">
+              {esPersonaJuridica && (
               <div className="grid grid-cols-3 gap-2">
                 <Campo label="T.I." className="col-span-1">
                   <select
@@ -1148,6 +1149,7 @@ export function VinculacionClientes({
                   />
                 </Campo>
               </div>
+              )}
               <Campo label="Fecha de expedicion">
                 <input
                   type="date"
@@ -1156,6 +1158,8 @@ export function VinculacionClientes({
                   className={inputClase}
                 />
               </Campo>
+              {esPersonaJuridica && (
+                <>
               <Campo label="Nombres">
                 <input
                   value={datos.repNombres}
@@ -1170,7 +1174,10 @@ export function VinculacionClientes({
                   className={inputClase}
                 />
               </Campo>
+                </>
+              )}
             </div>
+            {esPersonaJuridica && (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
               <Campo label="Telefono">
                 <input
@@ -1201,6 +1208,8 @@ export function VinculacionClientes({
                 />
               </Campo>
             </div>
+            )}
+            {esPersonaJuridica && (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Campo label="Foto del rostro">
                 {datos.repFoto ? (
@@ -1273,6 +1282,7 @@ export function VinculacionClientes({
                 )}
               </Campo>
             </div>
+            )}
           </Seccion>
 
           {/* 2. Accionistas */}
