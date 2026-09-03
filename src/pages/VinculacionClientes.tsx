@@ -1503,7 +1503,7 @@ export function VinculacionClientes({
 
           {/* 5. Datos de contacto comercial / pagos */}
           <Seccion numero={5} titulo="Datos de contacto comercial">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.6fr_1fr_0.85fr_0.9fr]">
               <Campo label="Persona encargada de compras/pagos">
                 <input
                   value={datos.pagosNombre}
