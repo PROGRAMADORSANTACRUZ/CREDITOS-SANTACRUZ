@@ -1116,12 +1116,23 @@ export function VinculacionClientes({
                   className={inputClase}
                 />
               </Campo>
+              {!esPersonaJuridica && (
+                <Campo label="Fecha de expedicion">
+                  <input
+                    type="date"
+                    value={datos.repFechaExpedicion}
+                    onChange={(e) => set('repFechaExpedicion', e.target.value)}
+                    className={inputClase}
+                  />
+                </Campo>
+              )}
             </div>
+            {esPersonaJuridica && (
+            <>
             <h4 className="pt-2 text-sm font-semibold text-slate-700">
-              {esPersonaJuridica ? 'Datos representante legal' : 'Documento de identidad'}
+              Datos representante legal
             </h4>
             <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-4">
-              {esPersonaJuridica && (
               <div className="grid grid-cols-3 gap-2">
                 <Campo label="T.I." className="col-span-1">
                   <select
@@ -1149,7 +1160,6 @@ export function VinculacionClientes({
                   />
                 </Campo>
               </div>
-              )}
               <Campo label="Fecha de expedicion">
                 <input
                   type="date"
@@ -1283,14 +1293,18 @@ export function VinculacionClientes({
               </Campo>
             </div>
             )}
+            </>
+            )}
           </Seccion>
 
           {/* 2. Accionistas */}
           <Seccion
             numero={2}
-            titulo="Accionistas o asociados (mas del 5% de participacion)"
+            titulo={`Accionistas o asociados (mas del 5% de participacion)${
+              esPersonaJuridica ? '' : ' — No aplica para persona natural (opcional)'
+            }`}
           >
-            <div className="space-y-3">
+            <div className={`space-y-3 ${esPersonaJuridica ? '' : 'opacity-50'}`}>
               {datos.accionistas.length === 0 && (
                 <p className="text-sm text-slate-400">
                   Sin accionistas registrados.
