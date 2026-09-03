@@ -36,7 +36,7 @@ export function Login() {
       >
         <div className="mb-6 text-center">
           <h1 className="font-display text-2xl font-bold text-slate-900">
-            CREDITOS
+            Clientes Grupos Santacruz
           </h1>
           <p className="text-sm text-slate-500">Panel de analisis de credito</p>
         </div>

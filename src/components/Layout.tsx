@@ -65,7 +65,7 @@ export function Layout() {
       <aside className="flex w-72 flex-col bg-slate-900 text-slate-100">
         <div className="border-b border-slate-800 px-6 py-5">
           <h1 className="font-display text-xl font-bold tracking-tight">
-            CREDITOS
+            Clientes Grupos Santacruz
           </h1>
           <p className="text-xs text-slate-400">Carnes Santacruz S.A.S.</p>
         </div>
