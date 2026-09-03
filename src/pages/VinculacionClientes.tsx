@@ -27,6 +27,13 @@ interface Referencia {
   ciudad: string
   telefono: string
 }
+interface PepFamiliar {
+  parentesco: string
+  nombre: string
+  cargoEntidad: string
+  pais: string
+  fechas: string
+}
 
 // Documento adjuntado por el cliente (JPG o PDF) guardado como data URL.
 interface DocumentoCargado {
@@ -120,6 +127,26 @@ interface FormDatos {
   patrimonio: string
   otrosIngresos: string
   conceptoOtrosIngresos: string
+  // 8. PEP (Persona Expuesta Politicamente)
+  pepEsPep: string
+  pepParentescoPep: string
+  pepAsociadoPep: string
+  pepCargoPublico: string
+  pepCargoExacto: string
+  pepEntidad: string
+  pepPais: string
+  pepFechaInicio: string
+  pepFechaFin: string
+  pepManejaRecursos: string
+  pepJuntaEstatal: string
+  pepServidorExtranjero: string
+  pepFamiliares: PepFamiliar[]
+  pepAsociadosCercanos: string
+  pepAsociadosDetalle: string
+  pepOrigenRecursos: string[]
+  pepOrigenOtros: string
+  pepFinancioCampanas: string
+  pepFuncionesOrgInternacional: string
   // 9. Beneficiario final
   bfNombre: string
   bfTipoDocumento: string
@@ -366,6 +393,21 @@ const LISTAS_FUENTES = [
   'Información relacionada con beneficiarios finales, cuando aplique y sea procedente conforme a la ley.',
 ]
 const TIPOS_PERSONA = ['Persona Natural', 'Persona Juridica']
+const PEP_PARENTESCOS = [
+  'Cónyuge / Compañero(a) permanente',
+  'Padres',
+  'Hijos',
+  'Hermanos',
+  'Suegros',
+  'Otros',
+]
+const PEP_ORIGENES = [
+  'Salario / honorarios del cargo público',
+  'Actividad empresarial / privada',
+  'Inversiones / rentas',
+  'Herencias / donaciones',
+  'Otras',
+]
 const TIPOS_DOC = ['CC', 'CE', 'NIT', 'TI']
 const TIPOS_PERSONA_JURIDICA = ['S.A.S', 'Ilimitada', 'S.A', 'Unipersonal', 'Otros']
 const TIPOS_ACTIVIDAD = ['Comercial', 'Servicios', 'Industrial']
@@ -463,6 +505,25 @@ const datosVacio = (): FormDatos => ({
   patrimonio: '',
   otrosIngresos: '',
   conceptoOtrosIngresos: '',
+  pepEsPep: '',
+  pepParentescoPep: '',
+  pepAsociadoPep: '',
+  pepCargoPublico: '',
+  pepCargoExacto: '',
+  pepEntidad: '',
+  pepPais: '',
+  pepFechaInicio: '',
+  pepFechaFin: '',
+  pepManejaRecursos: '',
+  pepJuntaEstatal: '',
+  pepServidorExtranjero: '',
+  pepFamiliares: [],
+  pepAsociadosCercanos: '',
+  pepAsociadosDetalle: '',
+  pepOrigenRecursos: [],
+  pepOrigenOtros: '',
+  pepFinancioCampanas: '',
+  pepFuncionesOrgInternacional: '',
   bfNombre: '',
   bfTipoDocumento: 'CC',
   bfNumero: '',
@@ -641,6 +702,43 @@ export function VinculacionClientes({
     setDatos((prev) => ({
       ...prev,
       accionistas: prev.accionistas.filter((_, j) => j !== i),
+    }))
+  }
+
+  function setPepFamiliar(i: number, campo: keyof PepFamiliar, valor: string) {
+    setDatos((prev) => {
+      const arr = prev.pepFamiliares.slice()
+      arr[i] = { ...arr[i], [campo]: valor }
+      return { ...prev, pepFamiliares: arr }
+    })
+  }
+  function addPepFamiliar() {
+    setDatos((prev) => ({
+      ...prev,
+      pepFamiliares: [
+        ...prev.pepFamiliares,
+        {
+          parentesco: PEP_PARENTESCOS[0],
+          nombre: '',
+          cargoEntidad: '',
+          pais: '',
+          fechas: '',
+        },
+      ],
+    }))
+  }
+  function delPepFamiliar(i: number) {
+    setDatos((prev) => ({
+      ...prev,
+      pepFamiliares: prev.pepFamiliares.filter((_, j) => j !== i),
+    }))
+  }
+  function togglePepOrigen(op: string) {
+    setDatos((prev) => ({
+      ...prev,
+      pepOrigenRecursos: prev.pepOrigenRecursos.includes(op)
+        ? prev.pepOrigenRecursos.filter((x) => x !== op)
+        : [...prev.pepOrigenRecursos, op],
     }))
   }
 
@@ -1640,8 +1738,242 @@ export function VinculacionClientes({
             </div>
           </Seccion>
 
-          {/* 8. Autorizaciones */}
-          <Seccion numero={8} titulo="Autorizaciones y declaraciones">
+          {/* 8. PEP */}
+          <Seccion numero={8} titulo="Persona Expuesta Políticamente (PEP)">
+            <p className="text-xs text-slate-500">
+              Marca la opción que corresponda. Si respondes “Sí”, completa la
+              información solicitada.
+            </p>
+
+            <h4 className="pt-2 text-sm font-semibold text-slate-700">
+              1. Declaración inicial (autoclasificación)
+            </h4>
+            <div className="space-y-2">
+              <PreguntaSiNo
+                texto="1. ¿Usted es, o ha sido en los últimos 2 años, una Persona Expuesta Políticamente (PEP) nacional o extranjera?"
+                value={datos.pepEsPep}
+                onChange={(v) => set('pepEsPep', v)}
+              />
+              <PreguntaSiNo
+                texto="2. ¿Usted es cónyuge, compañero(a) permanente, o tiene parentesco hasta segundo grado de consanguinidad, segundo de afinidad o primero civil con una PEP?"
+                value={datos.pepParentescoPep}
+                onChange={(v) => set('pepParentescoPep', v)}
+              />
+              <PreguntaSiNo
+                texto="3. ¿Usted es asociado cercano o colaborador estrecho de una PEP (relación comercial, societaria o de confianza relevante)?"
+                value={datos.pepAsociadoPep}
+                onChange={(v) => set('pepAsociadoPep', v)}
+              />
+            </div>
+
+            <h4 className="pt-2 text-sm font-semibold text-slate-700">
+              2. Preguntas de identificación como PEP
+            </h4>
+            <div className="space-y-2">
+              <PreguntaSiNo
+                texto="4. ¿Ocupa o ha ocupado algún cargo público de alto nivel (Presidente, Vicepresidente, Ministro, Viceministro, Congresista, Magistrado, Alcalde, Gobernador, Superintendente, Director de entidad pública, Alto mando militar o policial, Embajador, etc.)?"
+                value={datos.pepCargoPublico}
+                onChange={(v) => set('pepCargoPublico', v)}
+              />
+              {datos.pepCargoPublico === 'Si' && (
+                <div className="grid grid-cols-1 gap-4 rounded-lg border border-slate-200 p-3 md:grid-cols-3">
+                  <Campo label="Cargo exacto">
+                    <input
+                      value={datos.pepCargoExacto}
+                      onChange={(e) => set('pepCargoExacto', e.target.value)}
+                      className={inputClase}
+                    />
+                  </Campo>
+                  <Campo label="Entidad / Institución">
+                    <input
+                      value={datos.pepEntidad}
+                      onChange={(e) => set('pepEntidad', e.target.value)}
+                      className={inputClase}
+                    />
+                  </Campo>
+                  <Campo label="País">
+                    <input
+                      value={datos.pepPais}
+                      onChange={(e) => set('pepPais', e.target.value)}
+                      className={inputClase}
+                    />
+                  </Campo>
+                  <Campo label="Fecha de inicio">
+                    <input
+                      type="date"
+                      value={datos.pepFechaInicio}
+                      onChange={(e) => set('pepFechaInicio', e.target.value)}
+                      className={inputClase}
+                    />
+                  </Campo>
+                  <Campo label="Fecha de finalización">
+                    <input
+                      type="date"
+                      value={datos.pepFechaFin}
+                      onChange={(e) => set('pepFechaFin', e.target.value)}
+                      className={inputClase}
+                    />
+                  </Campo>
+                </div>
+              )}
+              <PreguntaSiNo
+                texto="5. ¿Maneja o ha manejado recursos públicos, o ejerce/ha ejercido control fiscal o interno en alguna entidad pública?"
+                value={datos.pepManejaRecursos}
+                onChange={(v) => set('pepManejaRecursos', v)}
+              />
+              <PreguntaSiNo
+                texto="6. ¿Es o ha sido miembro de junta directiva, consejo directivo o representante legal de una empresa estatal, sociedad de economía mixta o entidad pública?"
+                value={datos.pepJuntaEstatal}
+                onChange={(v) => set('pepJuntaEstatal', v)}
+              />
+              <PreguntaSiNo
+                texto="7. ¿Es o ha sido servidor público extranjero con funciones relevantes (jefe de Estado, ministro, parlamentario, magistrado, embajador, alto oficial militar, etc.)?"
+                value={datos.pepServidorExtranjero}
+                onChange={(v) => set('pepServidorExtranjero', v)}
+              />
+            </div>
+
+            <h4 className="pt-2 text-sm font-semibold text-slate-700">
+              3. Familiares y asociados cercanos
+            </h4>
+            <p className="text-xs text-slate-500">
+              8. Indique si alguno de sus familiares es o ha sido PEP en los
+              últimos 2 años.
+            </p>
+            <div className="space-y-3">
+              {datos.pepFamiliares.length === 0 && (
+                <p className="text-sm text-slate-400">
+                  Sin familiares registrados.
+                </p>
+              )}
+              {datos.pepFamiliares.map((f, i) => (
+                <div
+                  key={i}
+                  className="grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 md:grid-cols-[1.2fr_1.4fr_1.4fr_1fr_1fr_auto]"
+                >
+                  <select
+                    value={f.parentesco}
+                    onChange={(e) =>
+                      setPepFamiliar(i, 'parentesco', e.target.value)
+                    }
+                    className={inputClase}
+                  >
+                    {PEP_PARENTESCOS.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    value={f.nombre}
+                    onChange={(e) => setPepFamiliar(i, 'nombre', e.target.value)}
+                    placeholder="Nombre completo"
+                    className={inputClase}
+                  />
+                  <input
+                    value={f.cargoEntidad}
+                    onChange={(e) =>
+                      setPepFamiliar(i, 'cargoEntidad', e.target.value)
+                    }
+                    placeholder="Cargo / Entidad"
+                    className={inputClase}
+                  />
+                  <input
+                    value={f.pais}
+                    onChange={(e) => setPepFamiliar(i, 'pais', e.target.value)}
+                    placeholder="País"
+                    className={inputClase}
+                  />
+                  <input
+                    value={f.fechas}
+                    onChange={(e) => setPepFamiliar(i, 'fechas', e.target.value)}
+                    placeholder="Fecha inicio / fin"
+                    data-no-upper
+                    className={inputClase}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => delPepFamiliar(i)}
+                    className="rounded-md border border-slate-300 px-3 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    Quitar
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addPepFamiliar}
+                className="text-sm font-medium text-brand-600 hover:underline"
+              >
+                + Agregar familiar
+              </button>
+            </div>
+            <PreguntaSiNo
+              texto="9. ¿Tiene asociados cercanos (socios de negocios, apoderados, personas de confianza) que sean PEP?"
+              value={datos.pepAsociadosCercanos}
+              onChange={(v) => set('pepAsociadosCercanos', v)}
+            />
+            {datos.pepAsociadosCercanos === 'Si' && (
+              <Campo label="Detalle (nombre, tipo de relación y cargo del PEP)">
+                <input
+                  value={datos.pepAsociadosDetalle}
+                  onChange={(e) => set('pepAsociadosDetalle', e.target.value)}
+                  className={inputClase}
+                />
+              </Campo>
+            )}
+
+            <h4 className="pt-2 text-sm font-semibold text-slate-700">
+              4. Información complementaria
+            </h4>
+            <div className="space-y-2">
+              <span className="text-sm text-slate-700">
+                10. Origen de los recursos / patrimonio: ¿cuál es la fuente
+                principal de sus ingresos y patrimonio?
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {PEP_ORIGENES.map((op) => {
+                  const activo = datos.pepOrigenRecursos.includes(op)
+                  return (
+                    <button
+                      key={op}
+                      type="button"
+                      onClick={() => togglePepOrigen(op)}
+                      className={`rounded-full border px-4 py-1.5 text-sm font-medium transition ${
+                        activo
+                          ? 'border-brand-600 bg-brand-600 text-white'
+                          : 'border-slate-300 bg-white text-slate-600 hover:border-brand-400 hover:text-brand-600'
+                      }`}
+                    >
+                      {op}
+                    </button>
+                  )
+                })}
+              </div>
+              {datos.pepOrigenRecursos.includes('Otras') && (
+                <Campo label="Otras (especifique)">
+                  <input
+                    value={datos.pepOrigenOtros}
+                    onChange={(e) => set('pepOrigenOtros', e.target.value)}
+                    className={inputClase}
+                  />
+                </Campo>
+              )}
+              <PreguntaSiNo
+                texto="11. ¿Ha financiado o tiene parentesco cercano con alguien que haya financiado campañas políticas por montos significativos?"
+                value={datos.pepFinancioCampanas}
+                onChange={(v) => set('pepFinancioCampanas', v)}
+              />
+              <PreguntaSiNo
+                texto="12. ¿Ejerce o ha ejercido funciones directivas en alguna organización internacional?"
+                value={datos.pepFuncionesOrgInternacional}
+                onChange={(v) => set('pepFuncionesOrgInternacional', v)}
+              />
+            </div>
+          </Seccion>
+
+          {/* 9. Autorizaciones */}
+          <Seccion numero={9} titulo="Autorizaciones y declaraciones">
             <p className="mb-3 text-xs text-slate-500">
               Debes abrir y aceptar cada una de las siguientes autorizaciones y
               declaraciones para poder guardar la solicitud.
@@ -1680,9 +2012,9 @@ export function VinculacionClientes({
             </div>
           </Seccion>
 
-          {/* 9. Documentos requeridos (segun tipo de credito) */}
+          {/* 10. Documentos requeridos (segun tipo de credito) */}
           {docsRequeridos(datos.tipoCredito).length > 0 && (
-            <Seccion numero={9} titulo="Documentos requeridos">
+            <Seccion numero={10} titulo="Documentos requeridos">
               <p className="text-xs text-slate-500">
                 Adjunta cada documento en formato JPG o PDF.
               </p>
@@ -2065,6 +2397,38 @@ function Seccion({
       </div>
       <div className="space-y-4 p-6">{children}</div>
     </section>
+  )
+}
+
+function PreguntaSiNo({
+  texto,
+  value,
+  onChange,
+}: {
+  texto: string
+  value: string
+  onChange: (v: string) => void
+}) {
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-slate-200 p-3 sm:flex-row sm:items-center sm:justify-between">
+      <span className="text-sm text-slate-700">{texto}</span>
+      <div className="inline-flex shrink-0 overflow-hidden rounded-md border border-slate-300 text-sm">
+        {['Si', 'No'].map((op) => (
+          <button
+            key={op}
+            type="button"
+            onClick={() => onChange(op)}
+            className={`px-4 py-1.5 font-medium ${
+              value === op
+                ? 'bg-brand-600 text-white'
+                : 'bg-white text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            {op === 'Si' ? 'Sí' : 'No'}
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }
 
