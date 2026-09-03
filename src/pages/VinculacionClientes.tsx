@@ -146,6 +146,8 @@ const EMPRESAS = [
   'Inversiones Serrano Millan',
   'Agroporcicola Santacruz',
   'Transantacruz',
+  'Cristian Fabian Serrano Millan',
+  'Inversiones Serueda',
 ]
 
 // Nombre legal (razon social) usado en autorizaciones y declaraciones segun empresa.
@@ -155,6 +157,8 @@ const NOMBRE_LEGAL_EMPRESA: Record<string, string> = {
   'Inversiones Serrano Millan': 'Inversiones Serrano Millán S.A.S.',
   'Agroporcicola Santacruz': 'Agroporcícola Santacruz S.A.S.',
   Transantacruz: 'Transantacruz S.A.S.',
+  'Cristian Fabian Serrano Millan': 'Cristian Fabián Serrano Millán',
+  'Inversiones Serueda': 'Inversiones Serueda S.A.S.',
 }
 
 // Devuelve la razon social de la empresa seleccionada (o un valor por defecto).
