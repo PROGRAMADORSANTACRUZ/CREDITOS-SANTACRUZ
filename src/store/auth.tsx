@@ -14,6 +14,7 @@ interface AuthContextValor {
   usuario: Usuario | null
   cargando: boolean
   login: (email: string, password: string) => Promise<void>
+  loginConSso: (ticket: string) => Promise<void>
   logout: () => void
 }
 
@@ -44,14 +45,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUsuario(res.usuario)
   }, [])
 
+  const loginConSso = useCallback(async (ticket: string) => {
+    const res = await api.ssoLogin(ticket)
+    setToken(res.token)
+    setUsuario(res.usuario)
+  }, [])
+
   const logout = useCallback(() => {
     setToken(null)
     setUsuario(null)
   }, [])
 
   const valor = useMemo(
-    () => ({ usuario, cargando, login, logout }),
-    [usuario, cargando, login, logout],
+    () => ({ usuario, cargando, login, loginConSso, logout }),
+    [usuario, cargando, login, loginConSso, logout],
   )
 
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>

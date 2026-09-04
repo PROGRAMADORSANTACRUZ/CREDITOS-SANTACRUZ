@@ -10,9 +10,11 @@ import { Usuarios } from './pages/Usuarios'
 import { InicioRedirect } from './pages/InicioRedirect'
 import { Login } from './pages/Login'
 import { SolicitudPublica } from './pages/SolicitudPublica'
+import { SsoCallback } from './pages/SsoCallback'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
+  { path: '/sso/callback', element: <SsoCallback /> },
   { path: '/solicitud/:token', element: <SolicitudPublica /> },
   {
     element: <Layout />,

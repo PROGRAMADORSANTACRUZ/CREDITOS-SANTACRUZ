@@ -18,6 +18,11 @@ export const config = {
   deletePassword: process.env.DELETE_PASSWORD ?? 'eliminar',
   // URL publica del frontend, usada para armar el link de la solicitud.
   appUrl: process.env.APP_URL ?? 'http://localhost:5174',
+  // SSO con la Suite Santa Cruz (canje de tickets server-to-server).
+  sso: {
+    suiteUrl: (process.env.SUITE_URL ?? process.env.SCTOOLS_URL ?? 'http://localhost:8000').replace(/\/$/, ''),
+    sharedSecret: process.env.SSO_SHARED_SECRET ?? '',
+  },
   // Horas de validez del link de invitacion al cliente.
   invitacionHoras: Number(process.env.INVITACION_HORAS ?? 24),
   // Configuracion SMTP para el envio de correos (Nodemailer).

@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { query } from '../db.js'
+import { config } from '../config.js'
 import {
   firmarToken,
   requireAuth,
@@ -46,6 +47,77 @@ authRouter.post('/login', async (req, res, next) => {
       res.status(403).json({ error: 'Usuario inactivo' })
       return
     }
+    const payload: TokenPayload = {
+      sub: String(usuario.id),
+      email: usuario.email as string,
+      rol: usuario.rol as RolUsuario,
+      nombre: usuario.nombre as string,
+      permisos: sanearPermisos(usuario.permisos),
+    }
+    res.json({ token: firmarToken(payload), usuario: mapUsuario(usuario) })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Inicio de sesion por SSO: canjea el ticket emitido por la Suite y devuelve el JWT local.
+authRouter.post('/sso-login', async (req, res, next) => {
+  try {
+    const ticket = ((req.body?.ticket as string | undefined) ?? '').trim()
+    if (!ticket) {
+      res.status(400).json({ error: 'Falta el ticket SSO' })
+      return
+    }
+    if (!config.sso.sharedSecret) {
+      res.status(500).json({ error: 'SSO no configurado en el servidor' })
+      return
+    }
+
+    const redeemRes = await fetch(`${config.sso.suiteUrl}/api/sso/redeem`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-SSO-Secret': config.sso.sharedSecret,
+      },
+      body: JSON.stringify({ ticket }),
+    })
+
+    if (!redeemRes.ok) {
+      const cuerpo = (await redeemRes.json().catch(() => ({}))) as { message?: string }
+      res.status(401).json({ error: cuerpo.message || 'Ticket SSO invalido o expirado' })
+      return
+    }
+
+    const identidad = (await redeemRes.json()) as {
+      email?: string
+      cedula?: string
+      name?: string
+    }
+    const email = (identidad.email ?? '').trim().toLowerCase()
+    const cedula = (identidad.cedula ?? '').toString().trim()
+    if (!email && !cedula) {
+      res.status(422).json({ error: 'El usuario SSO no tiene cédula ni correo asociado' })
+      return
+    }
+
+    const filas = await query(
+      `SELECT id, nombre, email, rol, activo, permisos, fecha_creacion
+         FROM usuarios
+        WHERE ($1 <> '' AND cedula = $1)
+           OR ($2 <> '' AND lower(email) = $2)
+        LIMIT 1`,
+      [cedula, email],
+    )
+    const usuario = filas[0]
+    if (!usuario) {
+      res.status(403).json({ error: 'No tienes una cuenta en Creditos. Contacta al administrador.' })
+      return
+    }
+    if (!usuario.activo) {
+      res.status(403).json({ error: 'Usuario inactivo' })
+      return
+    }
+
     const payload: TokenPayload = {
       sub: String(usuario.id),
       email: usuario.email as string,

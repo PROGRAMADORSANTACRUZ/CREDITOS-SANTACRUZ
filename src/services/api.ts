@@ -86,6 +86,12 @@ export const api = {
       body: { email, password },
     })
   },
+  ssoLogin(ticket: string): Promise<LoginResponse> {
+    return pedir<LoginResponse>('/auth/sso-login', {
+      method: 'POST',
+      body: { ticket },
+    })
+  },
   miUsuario(): Promise<Usuario> {
     return pedir<Usuario>('/auth/me')
   },

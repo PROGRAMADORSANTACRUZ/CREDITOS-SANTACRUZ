@@ -5,6 +5,7 @@ import { config } from './config.js'
 import { query } from './db.js'
 import { permisosPorRol, type RolUsuario } from './types.js'
 import { authRouter } from './routes/auth.js'
+import { provisioningRouter } from './routes/provisioning.js'
 import { usuariosRouter } from './routes/usuarios.js'
 import { invitacionesRouter } from './routes/invitaciones.js'
 import { vinculacionClientesRouter } from './routes/vinculacionClientes.js'
@@ -32,6 +33,8 @@ app.get('/api/live', (_req, res) => {
 
 // Modulos de creditos (acceso publico, sin login).
 app.use('/api/auth', authRouter)
+// Aprovisionamiento server-to-server desde la Suite (protegido con secreto SSO).
+app.use('/api/provisioning', provisioningRouter)
 app.use('/api/usuarios', usuariosRouter)
 app.use('/api/invitaciones', invitacionesRouter)
 app.use('/api/vinculacion-clientes', vinculacionClientesRouter)
@@ -60,6 +63,11 @@ async function asegurarEsquema(): Promise<void> {
   await query(
     "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS permisos JSONB NOT NULL DEFAULT '[]'",
   )
+  // Cédula: clave canónica compartida con la Suite (para SSO y aprovisionamiento).
+  await query('ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS cedula VARCHAR(30)')
+  await query('CREATE UNIQUE INDEX IF NOT EXISTS usuarios_cedula_uidx ON usuarios (cedula) WHERE cedula IS NOT NULL')
+  // Permite usuarios sin email (identificados solo por cédula desde la Suite).
+  await query('ALTER TABLE usuarios ALTER COLUMN email DROP NOT NULL')
   const sinPermisos = await query(
     "SELECT id, rol FROM usuarios WHERE permisos IS NULL OR permisos = '[]'::jsonb",
   )
