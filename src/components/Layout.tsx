@@ -11,7 +11,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   {
     to: '/enviar-solicitud',
-    label: 'Enviar solicitud a cliente',
+    label: 'Enviar solicitud a terceros',
     modulo: 'enviar-solicitud',
   },
   {

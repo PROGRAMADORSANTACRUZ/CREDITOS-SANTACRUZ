@@ -15,7 +15,7 @@ export const MODULOS = [
 export type Modulo = (typeof MODULOS)[number]
 
 export const MODULOS_LABEL: Record<Modulo, string> = {
-  'enviar-solicitud': 'Enviar solicitud a cliente',
+  'enviar-solicitud': 'Enviar solicitud a terceros',
   'panel-solicitudes': 'Revisión de solicitudes',
   'vinculacion-clientes': 'Solicitud de crédito (manual)',
   'registro-proveedores': 'Registro de proveedores',
