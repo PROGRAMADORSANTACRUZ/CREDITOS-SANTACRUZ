@@ -20,11 +20,6 @@ const navItems: NavItem[] = [
     modulo: 'panel-solicitudes',
   },
   {
-    to: '/vinculacion-clientes',
-    label: 'Solicitud de crédito (manual)',
-    modulo: 'vinculacion-clientes',
-  },
-  {
     to: '/registro-proveedores',
     label: 'Registro de proveedores',
     modulo: 'registro-proveedores',

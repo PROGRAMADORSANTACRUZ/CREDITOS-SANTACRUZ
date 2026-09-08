@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { api } from '../services/api'
 import type { VinculacionCliente } from '../types/trazabilidad'
 import { AnalisisCupo } from './AnalisisCupo'
+import { VinculacionClientes } from './VinculacionClientes'
 
 const ESTADOS = ['', 'Pendiente', 'Aprobado', 'Aplazado', 'Negado']
 
@@ -25,6 +26,7 @@ export function PanelSolicitudes() {
   const [busqueda, setBusqueda] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
   const [seleccion, setSeleccion] = useState<VinculacionCliente | null>(null)
+  const [detalle, setDetalle] = useState<VinculacionCliente | null>(null)
 
   async function cargar() {
     setCargando(true)
@@ -71,6 +73,11 @@ export function PanelSolicitudes() {
   function onGuardado(actualizado: VinculacionCliente) {
     setRegistros((rs) => rs.map((r) => (r.id === actualizado.id ? actualizado : r)))
     setSeleccion(null)
+  }
+
+  function onGuardadoDetalle(actualizado: VinculacionCliente) {
+    setRegistros((rs) => rs.map((r) => (r.id === actualizado.id ? actualizado : r)))
+    setDetalle(null)
   }
 
   return (
@@ -163,12 +170,20 @@ export function PanelSolicitudes() {
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <button
-                    onClick={() => setSeleccion(r)}
-                    className="rounded-md bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700"
-                  >
-                    Analizar
-                  </button>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => setDetalle(r)}
+                      className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                    >
+                      Ver solicitud
+                    </button>
+                    <button
+                      onClick={() => setSeleccion(r)}
+                      className="rounded-md bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700"
+                    >
+                      Analizar
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -182,6 +197,20 @@ export function PanelSolicitudes() {
           onClose={() => setSeleccion(null)}
           onGuardado={onGuardado}
         />
+      )}
+
+      {detalle && (
+        <div className="fixed inset-0 z-40 overflow-y-auto bg-black/40 p-4">
+          <div className="mx-auto my-4 max-w-6xl rounded-xl bg-white p-6 shadow-2xl">
+            <VinculacionClientes
+              modoDetalle={{
+                registro: detalle,
+                onCerrar: () => setDetalle(null),
+                onGuardado: onGuardadoDetalle,
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
   )

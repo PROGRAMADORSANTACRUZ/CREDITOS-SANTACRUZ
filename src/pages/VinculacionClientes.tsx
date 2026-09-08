@@ -569,10 +569,21 @@ export interface ModoPublico {
   onEnviado: (consecutivo: string) => void
 }
 
+// Modo detalle: muestra el formulario completo de una solicitud existente
+// (lo que diligencio el cliente) dentro del panel de revision, para verlo y
+// editarlo sin salir de esa interfaz.
+export interface ModoDetalle {
+  registro: VinculacionCliente
+  onCerrar: () => void
+  onGuardado?: (actualizado: VinculacionCliente) => void
+}
+
 export function VinculacionClientes({
   modoPublico,
+  modoDetalle,
 }: {
   modoPublico?: ModoPublico
+  modoDetalle?: ModoDetalle
 } = {}) {
   const [registros, setRegistros] = useState<VinculacionCliente[]>([])
   const [cargando, setCargando] = useState(true)
@@ -637,6 +648,13 @@ export function VinculacionClientes({
       }))
       setEstado('Pendiente')
       setMostrarForm(true)
+      setCargando(false)
+      return
+    }
+    if (modoDetalle) {
+      // Panel de revision: se abre directamente el formulario diligenciado por
+      // el cliente, sin cargar el listado.
+      abrirEdicion(modoDetalle.registro)
       setCargando(false)
       return
     }
@@ -879,6 +897,10 @@ export function VinculacionClientes({
   }
 
   function cerrarForm() {
+    if (modoDetalle) {
+      modoDetalle.onCerrar()
+      return
+    }
     setMostrarForm(false)
     setEditandoId(null)
   }
@@ -982,6 +1004,11 @@ export function VinculacionClientes({
         setRegistros((prev) =>
           prev.map((r) => (r.id === editandoId ? actualizado : r)),
         )
+        if (modoDetalle) {
+          modoDetalle.onGuardado?.(actualizado)
+          modoDetalle.onCerrar()
+          return
+        }
       } else if (modoPublico) {
         const res = await api.enviarSolicitudPorToken(modoPublico.token, payload)
         modoPublico.onEnviado(res.consecutivo)
@@ -1035,6 +1062,15 @@ export function VinculacionClientes({
             Formato F-FIN-01 &mdash; Carnes Santacruz S.A.S.
           </p>
         </div>
+        {modoDetalle && (
+          <button
+            type="button"
+            onClick={() => modoDetalle.onCerrar()}
+            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+          >
+            Cerrar
+          </button>
+        )}
         {!mostrarForm && (
           <button
             onClick={abrirNuevo}
