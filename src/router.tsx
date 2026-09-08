@@ -7,6 +7,7 @@ import { RegistroActualizacionProveedores } from './pages/RegistroActualizacionP
 import { PanelSolicitudes } from './pages/PanelSolicitudes'
 import { EnviarSolicitud } from './pages/EnviarSolicitud'
 import { Usuarios } from './pages/Usuarios'
+import { TiposProveedor } from './pages/TiposProveedor'
 import { InicioRedirect } from './pages/InicioRedirect'
 import { Login } from './pages/Login'
 import { SolicitudPublica } from './pages/SolicitudPublica'
@@ -49,6 +50,14 @@ export const router = createBrowserRouter([
         element: (
           <RutaProtegida modulo="usuarios">
             <Usuarios />
+          </RutaProtegida>
+        ),
+      },
+      {
+        path: 'tipos-proveedor',
+        element: (
+          <RutaProtegida modulo="tipos-proveedor">
+            <TiposProveedor />
           </RutaProtegida>
         ),
       },

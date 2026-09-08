@@ -11,6 +11,7 @@ export const MODULOS = [
   'registro-proveedores',
   'registro-actualizacion-proveedores',
   'usuarios',
+  'tipos-proveedor',
 ] as const
 export type Modulo = (typeof MODULOS)[number]
 

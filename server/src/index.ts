@@ -11,6 +11,7 @@ import { invitacionesRouter } from './routes/invitaciones.js'
 import { vinculacionClientesRouter } from './routes/vinculacionClientes.js'
 import { registroProveedoresRouter } from './routes/registroProveedores.js'
 import { registroActualizacionProveedoresRouter } from './routes/registroActualizacionProveedores.js'
+import { tiposProveedorRouter } from './routes/tiposProveedor.js'
 
 const app = express()
 
@@ -43,6 +44,7 @@ app.use(
   '/api/registro-actualizacion-proveedores',
   registroActualizacionProveedoresRouter,
 )
+app.use('/api/tipos-proveedor', tiposProveedorRouter)
 
 // Manejador de errores.
 app.use(
@@ -77,6 +79,14 @@ async function asegurarEsquema(): Promise<void> {
       u.id,
     ])
   }
+  // Concede el modulo nuevo a los administradores existentes que ya tenian
+  // permisos guardados (la reasignacion anterior solo cubre permisos vacios).
+  await query(
+    `UPDATE usuarios
+        SET permisos = permisos || '["tipos-proveedor"]'::jsonb
+      WHERE rol = 'Administrador'
+        AND NOT (permisos @> '["tipos-proveedor"]'::jsonb)`,
+  )
   await query(
     "CREATE TABLE IF NOT EXISTS invitaciones_solicitud (" +
       " id SERIAL PRIMARY KEY," +
@@ -101,6 +111,27 @@ async function asegurarEsquema(): Promise<void> {
   await query(
     "ALTER TABLE invitaciones_solicitud ADD COLUMN IF NOT EXISTS tipo VARCHAR(20) NOT NULL DEFAULT 'solicitud'",
   )
+  await query(
+    "ALTER TABLE invitaciones_solicitud ADD COLUMN IF NOT EXISTS entidad VARCHAR(20) NOT NULL DEFAULT 'cliente'",
+  )
+  await query(
+    'ALTER TABLE invitaciones_solicitud ADD COLUMN IF NOT EXISTS proveedor_id INTEGER',
+  )
+  await query(
+    'CREATE TABLE IF NOT EXISTS tipos_proveedor (' +
+      ' id             SERIAL PRIMARY KEY,' +
+      ' nombre         VARCHAR(120) NOT NULL,' +
+      ' activo         BOOLEAN NOT NULL DEFAULT true,' +
+      ' fecha_creacion TIMESTAMP NOT NULL DEFAULT now()' +
+      ')',
+  )
+  // Siembra inicial con los tipos que antes estaban fijos en el formulario.
+  const totalTipos = await query('SELECT COUNT(*)::int AS n FROM tipos_proveedor')
+  if ((totalTipos[0]?.n ?? 0) === 0) {
+    await query(
+      "INSERT INTO tipos_proveedor (nombre) VALUES ('Insumos/Servicios'), ('Animales en pie')",
+    )
+  }
 
   // Crea un administrador por defecto si no existe ninguno, para que siempre
   // haya un acceso valido tras un despliegue nuevo.

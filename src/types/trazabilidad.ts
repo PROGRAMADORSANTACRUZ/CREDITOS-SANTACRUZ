@@ -11,6 +11,7 @@ export const MODULOS = [
   'registro-proveedores',
   'registro-actualizacion-proveedores',
   'usuarios',
+  'tipos-proveedor',
 ] as const
 export type Modulo = (typeof MODULOS)[number]
 
@@ -21,6 +22,7 @@ export const MODULOS_LABEL: Record<Modulo, string> = {
   'registro-proveedores': 'Registro de proveedores',
   'registro-actualizacion-proveedores': 'Registro / actualización proveedores',
   usuarios: 'Usuarios',
+  'tipos-proveedor': 'Tipo de proveedor',
 }
 
 export function permisosPorRol(rol: RolUsuario): Modulo[] {
@@ -87,6 +89,14 @@ export interface RegistroProveedor {
   observaciones?: string
   consecutivo?: string
   datos?: Record<string, unknown>
+  fechaCreacion: string
+}
+
+// ------------------------- Tipos de proveedor -------------------------
+export interface TipoProveedor {
+  id: string
+  nombre: string
+  activo: boolean
   fechaCreacion: string
 }
 

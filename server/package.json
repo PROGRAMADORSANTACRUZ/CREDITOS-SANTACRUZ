@@ -15,7 +15,8 @@
     "init:invitaciones": "tsx src/scripts/initInvitaciones.ts",
     "init:permisos": "tsx src/scripts/initPermisos.ts",
     "init:proveedores": "tsx src/scripts/initRegistroProveedores.ts",
-    "init:actualizacion": "tsx src/scripts/initRegistroActualizacionProveedores.ts"
+    "init:actualizacion": "tsx src/scripts/initRegistroActualizacionProveedores.ts",
+    "init:tipos-proveedor": "tsx src/scripts/initTiposProveedor.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

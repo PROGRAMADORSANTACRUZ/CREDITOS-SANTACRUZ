@@ -3,6 +3,7 @@ import type {
   NuevoUsuario,
   RegistroActualizacionProveedor,
   RegistroProveedor,
+  TipoProveedor,
   Usuario,
   VinculacionCliente,
 } from '../types/trazabilidad'
@@ -266,6 +267,38 @@ export const api = {
     password: string,
   ): Promise<void> {
     return pedir<void>(`/registro-actualizacion-proveedores/${id}`, {
+      method: 'DELETE',
+      body: { password },
+    })
+  },
+
+  // --------------------------- Tipos de proveedor ---------------------------
+  getTiposProveedor(): Promise<TipoProveedor[]> {
+    return pedir<TipoProveedor[]>('/tipos-proveedor')
+  },
+  getTiposProveedorPublicos(): Promise<TipoProveedor[]> {
+    return pedir<TipoProveedor[]>('/tipos-proveedor/publicos')
+  },
+  crearTipoProveedor(payload: {
+    nombre: string
+    activo?: boolean
+  }): Promise<TipoProveedor> {
+    return pedir<TipoProveedor>('/tipos-proveedor', {
+      method: 'POST',
+      body: payload,
+    })
+  },
+  actualizarTipoProveedor(
+    id: string,
+    payload: { nombre: string; activo?: boolean },
+  ): Promise<TipoProveedor> {
+    return pedir<TipoProveedor>(`/tipos-proveedor/${id}`, {
+      method: 'PUT',
+      body: payload,
+    })
+  },
+  eliminarTipoProveedor(id: string, password: string): Promise<void> {
+    return pedir<void>(`/tipos-proveedor/${id}`, {
       method: 'DELETE',
       body: { password },
     })

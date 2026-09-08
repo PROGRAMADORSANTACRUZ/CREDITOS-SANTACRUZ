@@ -34,6 +34,11 @@ const navItems: NavItem[] = [
     label: 'Usuarios',
     modulo: 'usuarios',
   },
+  {
+    to: '/tipos-proveedor',
+    label: 'Tipo de proveedor',
+    modulo: 'tipos-proveedor',
+  },
 ]
 
 const nombreRol: Record<RolUsuario, string> = {

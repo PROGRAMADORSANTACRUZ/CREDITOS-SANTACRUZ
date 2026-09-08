@@ -122,7 +122,6 @@ interface FormDatos {
 }
 
 const TIPOS_REGISTRO = ['Inscripcion', 'Actualizacion']
-const TIPOS_PROVEEDOR = ['Insumos/Servicios', 'Animales en pie']
 const TIPOS_DOC = ['CC', 'CE', 'NIT', 'TI']
 const ORIGENES = ['Nacional', 'Extranjera']
 const TIPOS_EMPRESA = ['Privada', 'Publica']
@@ -166,7 +165,7 @@ function hoy(): string {
 
 const datosVacio = (): FormDatos => ({
   tipoRegistro: 'Inscripcion',
-  tipoProveedor: 'Insumos/Servicios',
+  tipoProveedor: '',
   tipoIdentificacion: 'NIT',
   fecha: hoy(),
   razonSocial: '',
@@ -283,6 +282,25 @@ export function RegistroProveedores({
   const [aEliminar, setAEliminar] = useState<RegistroProveedor | null>(null)
   const [eliminando, setEliminando] = useState(false)
   const [errorEliminar, setErrorEliminar] = useState<string | null>(null)
+
+  // Opciones de tipo de proveedor tomadas del catalogo administrable. Usa el
+  // endpoint publico para que funcione tambien en el formulario por enlace.
+  const [tiposProveedor, setTiposProveedor] = useState<string[]>([])
+
+  useEffect(() => {
+    let vigente = true
+    void api
+      .getTiposProveedorPublicos()
+      .then((lista) => {
+        if (vigente) setTiposProveedor(lista.map((t) => t.nombre))
+      })
+      .catch(() => {
+        /* Si falla, el selector queda vacio pero no rompe el formulario. */
+      })
+    return () => {
+      vigente = false
+    }
+  }, [])
 
   async function cargar() {
     setCargando(true)
@@ -626,7 +644,7 @@ export function RegistroProveedores({
                 </Campo>
                 <Campo label="Tipo de proveedor">
                   <Pills
-                    opciones={TIPOS_PROVEEDOR}
+                    opciones={tiposProveedor}
                     value={datos.tipoProveedor}
                     onChange={(v) => set('tipoProveedor', v)}
                   />

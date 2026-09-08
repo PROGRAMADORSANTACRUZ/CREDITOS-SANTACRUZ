@@ -10,6 +10,7 @@ const RUTA_MODULO: Record<Modulo, string> = {
   'vinculacion-clientes': '/vinculacion-clientes',
   'registro-proveedores': '/registro-proveedores',
   'registro-actualizacion-proveedores': '/registro-actualizacion-proveedores',
+  'tipos-proveedor': '/tipos-proveedor',
 }
 
 const ORDEN: Modulo[] = [
@@ -19,6 +20,7 @@ const ORDEN: Modulo[] = [
   'vinculacion-clientes',
   'registro-proveedores',
   'registro-actualizacion-proveedores',
+  'tipos-proveedor',
 ]
 
 // Redirige al usuario a su primera seccion disponible segun sus permisos.
