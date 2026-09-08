@@ -88,6 +88,12 @@ async function asegurarEsquema(): Promise<void> {
         AND NOT (permisos @> '["tipos-proveedor"]'::jsonb)`,
   )
   await query(
+    `UPDATE usuarios
+        SET permisos = permisos || '["panel-proveedores"]'::jsonb
+      WHERE rol = 'Administrador'
+        AND NOT (permisos @> '["panel-proveedores"]'::jsonb)`,
+  )
+  await query(
     "CREATE TABLE IF NOT EXISTS invitaciones_solicitud (" +
       " id SERIAL PRIMARY KEY," +
       " token VARCHAR(80) NOT NULL UNIQUE," +

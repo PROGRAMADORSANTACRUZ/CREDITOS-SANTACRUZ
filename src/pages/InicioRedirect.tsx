@@ -5,6 +5,7 @@ import type { Modulo } from '../types/trazabilidad'
 // Ruta de inicio de cada modulo, en orden de prioridad.
 const RUTA_MODULO: Record<Modulo, string> = {
   'panel-solicitudes': '/panel-solicitudes',
+  'panel-proveedores': '/panel-proveedores',
   'enviar-solicitud': '/enviar-solicitud',
   usuarios: '/usuarios',
   'vinculacion-clientes': '/vinculacion-clientes',
@@ -15,6 +16,7 @@ const RUTA_MODULO: Record<Modulo, string> = {
 
 const ORDEN: Modulo[] = [
   'panel-solicitudes',
+  'panel-proveedores',
   'enviar-solicitud',
   'usuarios',
   'vinculacion-clientes',

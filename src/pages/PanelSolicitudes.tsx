@@ -19,7 +19,12 @@ function colorEstado(estado?: string): string {
   }
 }
 
-export function PanelSolicitudes() {
+export function PanelSolicitudes({
+  entidad = 'cliente',
+}: {
+  entidad?: 'cliente' | 'proveedor'
+} = {}) {
+  const esProveedor = entidad === 'proveedor'
   const [registros, setRegistros] = useState<VinculacionCliente[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -44,9 +49,16 @@ export function PanelSolicitudes() {
     void cargar()
   }, [])
 
+  // Cada panel muestra solo su tipo de tercero (cliente o proveedor).
+  const registrosEntidad = useMemo(
+    () =>
+      registros.filter((r) => (r.entidad === 'proveedor') === esProveedor),
+    [registros, esProveedor],
+  )
+
   const filtrados = useMemo(() => {
     const t = busqueda.trim().toLowerCase()
-    return registros.filter((r) => {
+    return registrosEntidad.filter((r) => {
       if (filtroEstado && (r.estado ?? 'Pendiente') !== filtroEstado) return false
       if (!t) return true
       return (
@@ -55,20 +67,20 @@ export function PanelSolicitudes() {
         (r.consecutivo ?? '').toLowerCase().includes(t)
       )
     })
-  }, [registros, busqueda, filtroEstado])
+  }, [registrosEntidad, busqueda, filtroEstado])
 
   const kpis = useMemo(() => {
     let pendientes = 0
     let aprobados = 0
     let negados = 0
-    for (const r of registros) {
+    for (const r of registrosEntidad) {
       const e = r.estado ?? 'Pendiente'
       if (e === 'Aprobado') aprobados += 1
       else if (e === 'Negado') negados += 1
       else pendientes += 1
     }
-    return { total: registros.length, pendientes, aprobados, negados }
-  }, [registros])
+    return { total: registrosEntidad.length, pendientes, aprobados, negados }
+  }, [registrosEntidad])
 
   function onGuardado(actualizado: VinculacionCliente) {
     setRegistros((rs) => rs.map((r) => (r.id === actualizado.id ? actualizado : r)))
@@ -84,10 +96,12 @@ export function PanelSolicitudes() {
     <div className="space-y-6">
       <div>
         <h2 className="font-display text-2xl font-bold text-slate-900">
-          Solicitudes de credito
+          {esProveedor ? 'Revisión de proveedores' : 'Revisión de terceros'}
         </h2>
         <p className="text-sm text-slate-500">
-          Analiza cada solicitud y registra la decision del comite.
+          {esProveedor
+            ? 'Solicitudes enviadas por proveedores. Revisa y registra la decisión.'
+            : 'Solicitudes enviadas por clientes. Analiza y registra la decisión del comité.'}
         </p>
       </div>
 

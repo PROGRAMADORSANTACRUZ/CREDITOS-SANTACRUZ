@@ -33,7 +33,15 @@ export const router = createBrowserRouter([
         path: 'panel-solicitudes',
         element: (
           <RutaProtegida modulo="panel-solicitudes">
-            <PanelSolicitudes />
+            <PanelSolicitudes entidad="cliente" />
+          </RutaProtegida>
+        ),
+      },
+      {
+        path: 'panel-proveedores',
+        element: (
+          <RutaProtegida modulo="panel-proveedores">
+            <PanelSolicitudes entidad="proveedor" />
           </RutaProtegida>
         ),
       },

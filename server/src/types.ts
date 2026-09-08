@@ -7,6 +7,7 @@ export const ROLES: RolUsuario[] = ['Administrador', 'Operador', 'Consulta']
 export const MODULOS = [
   'enviar-solicitud',
   'panel-solicitudes',
+  'panel-proveedores',
   'vinculacion-clientes',
   'registro-proveedores',
   'registro-actualizacion-proveedores',
@@ -27,7 +28,7 @@ export function permisosPorRol(rol: RolUsuario): Modulo[] {
         'registro-actualizacion-proveedores',
       ]
     case 'Consulta':
-      return ['panel-solicitudes']
+      return ['panel-solicitudes', 'panel-proveedores']
   }
 }
 

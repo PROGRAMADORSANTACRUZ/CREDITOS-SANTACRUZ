@@ -7,6 +7,7 @@ export const ROLES: RolUsuario[] = ['Administrador', 'Operador', 'Consulta']
 export const MODULOS = [
   'enviar-solicitud',
   'panel-solicitudes',
+  'panel-proveedores',
   'vinculacion-clientes',
   'registro-proveedores',
   'registro-actualizacion-proveedores',
@@ -17,7 +18,8 @@ export type Modulo = (typeof MODULOS)[number]
 
 export const MODULOS_LABEL: Record<Modulo, string> = {
   'enviar-solicitud': 'Enviar solicitud a terceros',
-  'panel-solicitudes': 'Revisión de solicitudes',
+  'panel-solicitudes': 'Revisión de terceros',
+  'panel-proveedores': 'Revisión de proveedores',
   'vinculacion-clientes': 'Solicitud de crédito (manual)',
   'registro-proveedores': 'Registro de proveedores',
   'registro-actualizacion-proveedores': 'Registro / actualización proveedores',

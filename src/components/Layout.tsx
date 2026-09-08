@@ -16,8 +16,13 @@ const navItems: NavItem[] = [
   },
   {
     to: '/panel-solicitudes',
-    label: 'Revisión de solicitudes',
+    label: 'Revisión de terceros',
     modulo: 'panel-solicitudes',
+  },
+  {
+    to: '/panel-proveedores',
+    label: 'Revisión de proveedores',
+    modulo: 'panel-proveedores',
   },
   {
     to: '/registro-proveedores',
