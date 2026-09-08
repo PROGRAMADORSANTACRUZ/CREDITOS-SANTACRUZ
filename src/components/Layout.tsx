@@ -25,11 +25,6 @@ const navItems: NavItem[] = [
     modulo: 'panel-proveedores',
   },
   {
-    to: '/registro-proveedores',
-    label: 'Registro de proveedores',
-    modulo: 'registro-proveedores',
-  },
-  {
     to: '/registro-actualizacion-proveedores',
     label: 'Registro / actualización proveedores',
     modulo: 'registro-actualizacion-proveedores',
