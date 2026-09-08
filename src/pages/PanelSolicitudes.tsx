@@ -131,6 +131,7 @@ export function PanelSolicitudes() {
             <tr>
               <th className="px-4 py-3">Consecutivo</th>
               <th className="px-4 py-3">Cliente</th>
+              <th className="px-4 py-3">Tipo</th>
               <th className="px-4 py-3">Documento</th>
               <th className="px-4 py-3">Fecha</th>
               <th className="px-4 py-3">Estado</th>
@@ -140,14 +141,14 @@ export function PanelSolicitudes() {
           <tbody className="divide-y divide-slate-100">
             {cargando && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
                   Cargando...
                 </td>
               </tr>
             )}
             {!cargando && filtrados.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
                   No hay solicitudes.
                 </td>
               </tr>
@@ -158,6 +159,17 @@ export function PanelSolicitudes() {
                   {r.consecutivo ?? '-'}
                 </td>
                 <td className="px-4 py-3 text-slate-800">{r.cliente}</td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      r.entidad === 'proveedor'
+                        ? 'bg-amber-100 text-amber-700'
+                        : 'bg-sky-100 text-sky-700'
+                    }`}
+                  >
+                    {r.entidad === 'proveedor' ? 'Proveedor' : 'Cliente'}
+                  </span>
+                </td>
                 <td className="px-4 py-3 text-slate-600">{r.documento ?? '-'}</td>
                 <td className="px-4 py-3 text-slate-600">{r.fecha ?? '-'}</td>
                 <td className="px-4 py-3">

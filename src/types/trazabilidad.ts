@@ -72,6 +72,7 @@ export interface VinculacionCliente {
   estado?: string
   observaciones?: string
   consecutivo?: string
+  entidad?: 'cliente' | 'proveedor'
   datos?: Record<string, unknown>
   fechaCreacion: string
 }

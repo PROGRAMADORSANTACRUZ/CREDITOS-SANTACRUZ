@@ -118,6 +118,9 @@ async function asegurarEsquema(): Promise<void> {
     'ALTER TABLE invitaciones_solicitud ADD COLUMN IF NOT EXISTS proveedor_id INTEGER',
   )
   await query(
+    "ALTER TABLE vinculacion_clientes ADD COLUMN IF NOT EXISTS entidad VARCHAR(20) NOT NULL DEFAULT 'cliente'",
+  )
+  await query(
     'CREATE TABLE IF NOT EXISTS tipos_proveedor (' +
       ' id             SERIAL PRIMARY KEY,' +
       ' nombre         VARCHAR(120) NOT NULL,' +

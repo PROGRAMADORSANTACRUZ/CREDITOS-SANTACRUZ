@@ -9,7 +9,7 @@ import type { NuevaVinculacionCliente, NuevoRegistroProveedor } from '../types.j
 export const invitacionesRouter = Router()
 
 const COLS_VC = `id, fecha, cliente, documento, telefono, direccion, tipo_persona,
-                 tipo_solicitud, estado, observaciones, consecutivo, datos,
+                 tipo_solicitud, estado, observaciones, consecutivo, entidad, datos,
                  fecha_creacion`
 
 function esEmail(v: string): boolean {
@@ -216,7 +216,7 @@ invitacionesRouter.post('/:token/solicitud', async (req, res, next) => {
   try {
     const token = req.params.token
     const filas = await query(
-      `SELECT id, estado, fecha_expira, tipo, solicitud_id
+      `SELECT id, estado, fecha_expira, tipo, solicitud_id, entidad
          FROM invitaciones_solicitud WHERE token = $1 FOR UPDATE`,
       [token],
     )
@@ -288,8 +288,8 @@ invitacionesRouter.post('/:token/solicitud', async (req, res, next) => {
     const ins = await query(
       `INSERT INTO vinculacion_clientes
          (fecha, cliente, documento, telefono, direccion, tipo_persona,
-          tipo_solicitud, estado, observaciones, consecutivo, datos)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb) RETURNING ${COLS_VC}`,
+          tipo_solicitud, estado, observaciones, consecutivo, entidad, datos)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb) RETURNING ${COLS_VC}`,
       [
         body.fecha || null,
         body.cliente.trim(),
@@ -301,6 +301,7 @@ invitacionesRouter.post('/:token/solicitud', async (req, res, next) => {
         body.estado?.trim() || 'Pendiente',
         body.observaciones?.trim() || null,
         consecutivo,
+        inv.entidad === 'proveedor' ? 'proveedor' : 'cliente',
         JSON.stringify(body.datos ?? {}),
       ],
     )

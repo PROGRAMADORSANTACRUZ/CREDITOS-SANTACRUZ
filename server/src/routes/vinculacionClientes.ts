@@ -23,6 +23,8 @@ function map(r: Record<string, unknown>): VinculacionCliente {
     estado: (r.estado as string | null) ?? undefined,
     observaciones: (r.observaciones as string | null) ?? undefined,
     consecutivo: (r.consecutivo as string | null) ?? undefined,
+    entidad:
+      (r.entidad as 'cliente' | 'proveedor' | null) ?? 'cliente',
     datos: (r.datos as Record<string, unknown> | null) ?? undefined,
     fechaCreacion: (r.fecha_creacion as Date).toISOString(),
   }
@@ -36,7 +38,7 @@ function validar(body: Partial<NuevaVinculacionCliente>): string[] {
 }
 
 const COLS = `id, fecha, cliente, documento, telefono, direccion, tipo_persona,
-              tipo_solicitud, estado, observaciones, consecutivo, datos,
+              tipo_solicitud, estado, observaciones, consecutivo, entidad, datos,
               fecha_creacion`
 
 vinculacionClientesRouter.get(
