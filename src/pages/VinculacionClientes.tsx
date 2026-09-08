@@ -50,6 +50,7 @@ interface DocRequerido {
 interface FormDatos {
   empresa: string
   empresas: string[]
+  tipoProveedor: string
   tipoSolicitud: string
   tipoCredito: string
   tipoPersona: string
@@ -433,6 +434,7 @@ function hoy(): string {
 const datosVacio = (): FormDatos => ({
   empresa: '',
   empresas: [],
+  tipoProveedor: '',
   tipoSolicitud: '',
   tipoCredito: '',
   tipoPersona: '',
@@ -609,6 +611,25 @@ export function VinculacionClientes({
   const [aEliminar, setAEliminar] = useState<VinculacionCliente | null>(null)
   const [eliminando, setEliminando] = useState(false)
   const [errorEliminar, setErrorEliminar] = useState<string | null>(null)
+
+  // Opciones del catalogo administrable de tipos de proveedor. Usa el endpoint
+  // publico para que tambien funcione en el formulario por enlace (sin sesion).
+  const [tiposProveedor, setTiposProveedor] = useState<string[]>([])
+
+  useEffect(() => {
+    let vigente = true
+    void api
+      .getTiposProveedorPublicos()
+      .then((lista) => {
+        if (vigente) setTiposProveedor(lista.map((t) => t.nombre))
+      })
+      .catch(() => {
+        /* Si falla, el selector queda vacio pero no rompe el formulario. */
+      })
+    return () => {
+      vigente = false
+    }
+  }, [])
 
   async function cargar() {
     setCargando(true)
@@ -1151,6 +1172,22 @@ export function VinculacionClientes({
                 })}
               </div>
             </Campo>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Campo label="Tipo de proveedor">
+                <select
+                  value={datos.tipoProveedor}
+                  onChange={(e) => set('tipoProveedor', e.target.value)}
+                  className={inputClase}
+                >
+                  <option value="">Seleccione...</option>
+                  {tiposProveedor.map((op) => (
+                    <option key={op} value={op}>
+                      {op}
+                    </option>
+                  ))}
+                </select>
+              </Campo>
+            </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Campo label="Fecha Solicitud Credito">
                 <input
