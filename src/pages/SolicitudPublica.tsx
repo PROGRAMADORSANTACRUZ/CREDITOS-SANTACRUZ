@@ -12,6 +12,7 @@ export function SolicitudPublica() {
   const [mensaje, setMensaje] = useState('')
   const [consecutivo, setConsecutivo] = useState('')
   const [tipo, setTipo] = useState<'solicitud' | 'actualizacion'>('solicitud')
+  const [entidad, setEntidad] = useState<'cliente' | 'proveedor'>('cliente')
   const [datosPrevios, setDatosPrevios] = useState<Record<
     string,
     unknown
@@ -25,6 +26,7 @@ export function SolicitudPublica() {
         if (!activo) return
         setEmail(res.email)
         setTipo(res.tipo === 'actualizacion' ? 'actualizacion' : 'solicitud')
+        setEntidad(res.entidad === 'proveedor' ? 'proveedor' : 'cliente')
         setDatosPrevios(res.datosPrevios ?? null)
         setEstado('valido')
       })
@@ -125,6 +127,7 @@ export function SolicitudPublica() {
             token,
             emailCliente: email,
             tipo,
+            entidad,
             datosPrevios,
             onEnviado: (cons) => {
               setConsecutivo(cons)

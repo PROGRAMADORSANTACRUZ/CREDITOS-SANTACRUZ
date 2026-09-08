@@ -576,6 +576,7 @@ export interface ModoPublico {
   token: string
   emailCliente?: string
   tipo?: 'solicitud' | 'actualizacion'
+  entidad?: 'cliente' | 'proveedor'
   datosPrevios?: Record<string, unknown> | null
   onEnviado: (consecutivo: string) => void
 }
@@ -624,6 +625,11 @@ export function VinculacionClientes({
   // Opciones del catalogo administrable de tipos de proveedor. Usa el endpoint
   // publico para que tambien funcione en el formulario por enlace (sin sesion).
   const [tiposProveedor, setTiposProveedor] = useState<string[]>([])
+
+  // El campo "Tipo de proveedor" solo aplica cuando el tercero es un proveedor.
+  const [esProveedor, setEsProveedor] = useState(
+    modoPublico?.entidad === 'proveedor',
+  )
 
   useEffect(() => {
     let vigente = true
@@ -895,6 +901,7 @@ export function VinculacionClientes({
     setEditandoId(null)
     setDatos(datosVacio())
     setEstado('Pendiente')
+    setEsProveedor(false)
     setErrorForm(null)
     setMostrarForm(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -921,6 +928,7 @@ export function VinculacionClientes({
       numeroIdentificacion: r.documento ?? d.numeroIdentificacion ?? '',
     })
     setEstado(r.estado ?? 'Pendiente')
+    setEsProveedor(r.entidad === 'proveedor')
     setErrorForm(null)
     setMostrarForm(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -1181,22 +1189,24 @@ export function VinculacionClientes({
                 })}
               </div>
             </Campo>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Campo label="Tipo de proveedor">
-                <select
-                  value={datos.tipoProveedor}
-                  onChange={(e) => set('tipoProveedor', e.target.value)}
-                  className={inputClase}
-                >
-                  <option value="">Seleccione...</option>
-                  {tiposProveedor.map((op) => (
-                    <option key={op} value={op}>
-                      {op}
-                    </option>
-                  ))}
-                </select>
-              </Campo>
-            </div>
+            {esProveedor && (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Campo label="Tipo de proveedor">
+                  <select
+                    value={datos.tipoProveedor}
+                    onChange={(e) => set('tipoProveedor', e.target.value)}
+                    className={inputClase}
+                  >
+                    <option value="">Seleccione...</option>
+                    {tiposProveedor.map((op) => (
+                      <option key={op} value={op}>
+                        {op}
+                      </option>
+                    ))}
+                  </select>
+                </Campo>
+              </div>
+            )}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Campo label="Fecha Solicitud Credito">
                 <input
