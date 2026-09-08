@@ -61,7 +61,7 @@ export function EnviarSolicitud() {
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h2 className="font-display text-2xl font-bold text-slate-900">
-          Enviar enlace al cliente
+          Enviar enlace al tercero y proveedor
         </h2>
         <p className="text-sm text-slate-500">
           Envía un enlace único y seguro para que el cliente diligencie su
@@ -158,7 +158,7 @@ export function EnviarSolicitud() {
               ? 'Enviando...'
               : tipo === 'actualizacion'
                 ? 'Enviar enlace de actualización'
-                : 'Enviar enlace al cliente'}
+                : 'Enviar enlace al tercero y proveedor'}
           </button>
         </form>
 
