@@ -182,7 +182,10 @@ invitacionesRouter.get('/:token', async (req, res, next) => {
       return
     }
     if (new Date(inv.fecha_expira as string) < new Date()) {
-      res.status(410).json({ error: 'Este enlace ha expirado' })
+      res.status(410).json({
+        error: 'Solicitud expirada. Consulte nuevamente con su asesor.',
+        expirado: true,
+      })
       return
     }
     const tipo = (inv.tipo as string) ?? 'solicitud'
@@ -230,7 +233,10 @@ invitacionesRouter.post('/:token/solicitud', async (req, res, next) => {
       return
     }
     if (new Date(inv.fecha_expira as string) < new Date()) {
-      res.status(410).json({ error: 'Este enlace ha expirado' })
+      res.status(410).json({
+        error: 'Solicitud expirada. Consulte nuevamente con su asesor.',
+        expirado: true,
+      })
       return
     }
 
@@ -345,7 +351,10 @@ invitacionesRouter.post('/:token/proveedor', async (req, res, next) => {
       return
     }
     if (new Date(inv.fecha_expira as string) < new Date()) {
-      res.status(410).json({ error: 'Este enlace ha expirado' })
+      res.status(410).json({
+        error: 'Solicitud expirada. Consulte nuevamente con su asesor.',
+        expirado: true,
+      })
       return
     }
 

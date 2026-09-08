@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { api } from '../services/api'
 import { VinculacionClientes } from './VinculacionClientes'
 
-type Estado = 'cargando' | 'valido' | 'invalido' | 'enviado'
+type Estado = 'cargando' | 'valido' | 'invalido' | 'expirado' | 'enviado'
 
 export function SolicitudPublica() {
   const { token = '' } = useParams()
@@ -32,6 +32,10 @@ export function SolicitudPublica() {
       })
       .catch((err: unknown) => {
         if (!activo) return
+        if (err && typeof err === 'object' && 'expirado' in err && err.expirado) {
+          setEstado('expirado')
+          return
+        }
         setMensaje(
           err instanceof Error ? err.message : 'El enlace no es válido',
         )
@@ -46,6 +50,24 @@ export function SolicitudPublica() {
     return (
       <Centro>
         <p className="text-slate-500">Validando enlace...</p>
+      </Centro>
+    )
+  }
+
+  if (estado === 'expirado') {
+    return (
+      <Centro>
+        <div className="max-w-md rounded-xl border border-amber-200 bg-white p-8 text-center shadow-sm">
+          <h1 className="mb-2 text-xl font-semibold text-amber-600">
+            Solicitud expirada
+          </h1>
+          <p className="text-slate-600">
+            El enlace estuvo disponible por 72 horas y ya no es válido.
+          </p>
+          <p className="mt-4 text-sm text-slate-500">
+            Consulte nuevamente con su asesor para solicitar un nuevo enlace.
+          </p>
+        </div>
       </Centro>
     )
   }

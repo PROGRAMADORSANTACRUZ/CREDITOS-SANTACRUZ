@@ -24,7 +24,7 @@ export const config = {
     sharedSecret: (process.env.SSO_SHARED_SECRET ?? '').trim(),
   },
   // Horas de validez del link de invitacion al cliente.
-  invitacionHoras: Number(process.env.INVITACION_HORAS ?? 24),
+  invitacionHoras: Number(process.env.INVITACION_HORAS ?? 72),
   // Configuracion SMTP para el envio de correos (Nodemailer).
   smtp: {
     host: process.env.SMTP_HOST ?? '',
