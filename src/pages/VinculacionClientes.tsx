@@ -70,6 +70,8 @@ interface FormDatos {
   repPorcentajeParticipacion: string
   repFoto: string
   repFirma: string
+  cedulaFrente: string
+  cedulaReverso: string
   tipoPersonaJuridica: string
   fechaNacimiento: string
   tipoIdentificacion: string
@@ -462,6 +464,8 @@ const datosVacio = (): FormDatos => ({
   repPorcentajeParticipacion: '',
   repFoto: '',
   repFirma: '',
+  cedulaFrente: '',
+  cedulaReverso: '',
   tipoPersonaJuridica: '',
   fechaNacimiento: '',
   tipoIdentificacion: '',
@@ -616,6 +620,8 @@ export function VinculacionClientes({
   const [modalIntegral, setModalIntegral] = useState(false)
   const [modalTrazabilidad, setModalTrazabilidad] = useState(false)
   const [modalFoto, setModalFoto] = useState(false)
+  // Campo de FormDatos donde se guarda la foto capturada (rostro o cara de cedula).
+  const [campoFoto, setCampoFoto] = useState<keyof FormDatos>('repFoto')
   const [modalFirma, setModalFirma] = useState(false)
 
   const [aEliminar, setAEliminar] = useState<VinculacionCliente | null>(null)
@@ -771,6 +777,12 @@ export function VinculacionClientes({
 
   function set<K extends keyof FormDatos>(campo: K, valor: FormDatos[K]) {
     setDatos((prev) => ({ ...prev, [campo]: valor }))
+  }
+
+  // Abre el modal de camara indicando en que campo guardar la foto.
+  function abrirFoto(campo: keyof FormDatos) {
+    setCampoFoto(campo)
+    setModalFoto(true)
   }
 
   // Marca/desmarca una empresa (un cliente puede solicitar a varias).
@@ -1501,7 +1513,7 @@ export function VinculacionClientes({
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => setModalFoto(true)}
+                        onClick={() => abrirFoto('repFoto')}
                         className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
                       >
                         Cambiar
@@ -1518,7 +1530,7 @@ export function VinculacionClientes({
                 ) : (
                   <button
                     type="button"
-                    onClick={() => setModalFoto(true)}
+                    onClick={() => abrirFoto('repFoto')}
                     className="flex h-20 w-full items-center justify-center gap-2 rounded-md border border-dashed border-slate-300 text-sm text-slate-500 hover:border-brand-500 hover:text-brand-600"
                   >
                     📷 Tomar foto con la camara
@@ -1565,7 +1577,7 @@ export function VinculacionClientes({
             </>
             )}
             {!esPersonaJuridica && (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <Campo label="Foto del rostro">
                   {datos.repFoto ? (
                     <div className="flex items-center gap-3">
@@ -1577,7 +1589,7 @@ export function VinculacionClientes({
                       <div className="flex gap-2">
                         <button
                           type="button"
-                          onClick={() => setModalFoto(true)}
+                          onClick={() => abrirFoto('repFoto')}
                           className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
                         >
                           Cambiar
@@ -1594,32 +1606,32 @@ export function VinculacionClientes({
                   ) : (
                     <button
                       type="button"
-                      onClick={() => setModalFoto(true)}
+                      onClick={() => abrirFoto('repFoto')}
                       className="flex h-20 w-full items-center justify-center gap-2 rounded-md border border-dashed border-slate-300 text-sm text-slate-500 hover:border-brand-500 hover:text-brand-600"
                     >
                       📷 Tomar foto con la camara
                     </button>
                   )}
                 </Campo>
-                <Campo label="Firma">
-                  {datos.repFirma ? (
+                <Campo label="Cedula (frente)">
+                  {datos.cedulaFrente ? (
                     <div className="flex items-center gap-3">
                       <img
-                        src={datos.repFirma}
-                        alt="Firma"
-                        className="h-20 w-40 rounded-md border border-slate-300 bg-white object-contain"
+                        src={datos.cedulaFrente}
+                        alt="Cedula frente"
+                        className="h-20 w-28 rounded-md border border-slate-300 object-cover"
                       />
                       <div className="flex gap-2">
                         <button
                           type="button"
-                          onClick={() => setModalFirma(true)}
+                          onClick={() => abrirFoto('cedulaFrente')}
                           className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
                         >
                           Cambiar
                         </button>
                         <button
                           type="button"
-                          onClick={() => set('repFirma', '')}
+                          onClick={() => set('cedulaFrente', '')}
                           className="rounded-md border border-slate-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
                         >
                           Quitar
@@ -1629,10 +1641,45 @@ export function VinculacionClientes({
                   ) : (
                     <button
                       type="button"
-                      onClick={() => setModalFirma(true)}
+                      onClick={() => abrirFoto('cedulaFrente')}
                       className="flex h-20 w-full items-center justify-center gap-2 rounded-md border border-dashed border-slate-300 text-sm text-slate-500 hover:border-brand-500 hover:text-brand-600"
                     >
-                      ✍️ Firmar con el dedo
+                      📷 Foto cedula al derecho
+                    </button>
+                  )}
+                </Campo>
+                <Campo label="Cedula (reverso)">
+                  {datos.cedulaReverso ? (
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={datos.cedulaReverso}
+                        alt="Cedula reverso"
+                        className="h-20 w-28 rounded-md border border-slate-300 object-cover"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => abrirFoto('cedulaReverso')}
+                          className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                        >
+                          Cambiar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => set('cedulaReverso', '')}
+                          className="rounded-md border border-slate-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          Quitar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => abrirFoto('cedulaReverso')}
+                      className="flex h-20 w-full items-center justify-center gap-2 rounded-md border border-dashed border-slate-300 text-sm text-slate-500 hover:border-brand-500 hover:text-brand-600"
+                    >
+                      📷 Foto cedula al revés
                     </button>
                   )}
                 </Campo>
@@ -2489,7 +2536,7 @@ export function VinculacionClientes({
 
       {modalFoto && (
         <CapturaFoto
-          onCapturar={(url) => set('repFoto', url)}
+          onCapturar={(url) => set(campoFoto, url)}
           onCerrar={() => setModalFoto(false)}
         />
       )}
