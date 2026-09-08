@@ -321,11 +321,20 @@ const DOCS_POR_CREDITO: { prefijo: string; docs: DocRequerido[] }[] = [
   },
 ]
 
-function docsRequeridos(tipoCredito: string): DocRequerido[] {
+function docsRequeridos(
+  tipoCredito: string,
+  esPersonaJuridica = true,
+): DocRequerido[] {
   const encontrado = DOCS_POR_CREDITO.find((d) =>
     tipoCredito.startsWith(d.prefijo),
   )
-  return encontrado?.docs ?? []
+  const docs = encontrado?.docs ?? []
+  if (esPersonaJuridica) return docs
+  // Persona natural: el RUT y la camara de comercio no son obligatorios.
+  const opcionalesNatural = new Set(['rut', 'camaraComercio'])
+  return docs.map((doc) =>
+    opcionalesNatural.has(doc.id) ? { ...doc, opcional: true } : doc,
+  )
 }
 
 // Finalidades del tratamiento de datos (Ley 1581 de 2012) mostradas en el modal.
@@ -2166,13 +2175,13 @@ export function VinculacionClientes({
           </Seccion>
 
           {/* 10. Documentos requeridos (segun tipo de credito) */}
-          {docsRequeridos(datos.tipoCredito).length > 0 && (
+          {docsRequeridos(datos.tipoCredito, esPersonaJuridica).length > 0 && (
             <Seccion numero={11} titulo="Documentos requeridos" bloqueada={bloqueoResto}>
               <p className="text-xs text-slate-500">
                 Adjunta cada documento en formato JPG o PDF.
               </p>
               <div className="space-y-3">
-                {docsRequeridos(datos.tipoCredito).map((doc) => {
+                {docsRequeridos(datos.tipoCredito, esPersonaJuridica).map((doc) => {
                   const cargado = datos.documentos[doc.id]
                   return (
                     <div
