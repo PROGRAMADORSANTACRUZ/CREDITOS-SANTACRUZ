@@ -1,13 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { api } from '../services/api'
-
-type ClienteActualizable = {
-  id: string
-  cliente: string
-  documento: string
-  consecutivo: string
-  email: string
-}
 
 // Perfil Asesor: registra el correo del cliente para enviarle el link de la
 // solicitud de credito, o el link de actualizacion de datos de un cliente ya
@@ -18,49 +10,21 @@ export function EnviarSolicitud() {
   const [nombres, setNombres] = useState('')
   const [apellidos, setApellidos] = useState('')
   const [enviando, setEnviando] = useState(false)
-  const [clientes, setClientes] = useState<ClienteActualizable[]>([])
-  const [clienteId, setClienteId] = useState('')
-  const [cargandoClientes, setCargandoClientes] = useState(false)
   const [msg, setMsg] = useState<
     { tipo: 'ok' | 'error'; texto: string; link?: string } | null
   >(null)
 
-  // Carga la lista de clientes registrados al cambiar a modo actualizacion.
-  useEffect(() => {
-    if (tipo !== 'actualizacion' || clientes.length > 0) return
-    setCargandoClientes(true)
-    api
-      .clientesParaActualizar()
-      .then((lista) => setClientes(lista))
-      .catch(() => setClientes([]))
-      .finally(() => setCargandoClientes(false))
-  }, [tipo, clientes.length])
-
-  function seleccionarCliente(id: string) {
-    setClienteId(id)
-    const c = clientes.find((x) => x.id === id)
-    if (c) setEmail(c.email ?? '')
-  }
-
   async function enviar(e: React.FormEvent) {
     e.preventDefault()
-    if (tipo === 'actualizacion' && !clienteId) {
-      setMsg({ tipo: 'error', texto: 'Selecciona el cliente a actualizar.' })
-      return
-    }
     setEnviando(true)
     setMsg(null)
     try {
-      const res = await api.crearInvitacion(
-        tipo === 'actualizacion'
-          ? { email: email.trim(), tipo, solicitudId: clienteId }
-          : {
-              email: email.trim(),
-              nombres: nombres.trim(),
-              apellidos: apellidos.trim(),
-              tipo,
-            },
-      )
+      const res = await api.crearInvitacion({
+        email: email.trim(),
+        nombres: nombres.trim(),
+        apellidos: apellidos.trim(),
+        tipo,
+      })
       const nombreCompleto = `${res.nombres} ${res.apellidos}`.trim()
       const destino = nombreCompleto
         ? `${nombreCompleto} (${res.email})`
@@ -80,7 +44,6 @@ export function EnviarSolicitud() {
       setEmail('')
       setNombres('')
       setApellidos('')
-      setClienteId('')
     } catch (err) {
       const anyErr = err as { link?: string }
       setMsg({
@@ -138,62 +101,39 @@ export function EnviarSolicitud() {
         </div>
 
         <form onSubmit={enviar} className="space-y-4">
-          {tipo === 'actualizacion' ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">
-                Cliente a actualizar
+                Nombres
               </label>
-              <select
-                required
-                value={clienteId}
-                onChange={(e) => seleccionarCliente(e.target.value)}
+              <input
+                type="text"
+                value={nombres}
+                onChange={(e) => setNombres(e.target.value)}
+                placeholder="Nombres"
                 className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-              >
-                <option value="">
-                  {cargandoClientes
-                    ? 'Cargando clientes...'
-                    : 'Seleccione un cliente...'}
-                </option>
-                {clientes.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {[c.consecutivo, c.cliente, c.documento]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-xs text-slate-400">
-                El cliente recibirá su formulario ya diligenciado para
-                actualizar sus datos (no genera una nueva solicitud de crédito).
-              </p>
+              />
             </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Nombres
-                </label>
-                <input
-                  type="text"
-                  value={nombres}
-                  onChange={(e) => setNombres(e.target.value)}
-                  placeholder="Nombres"
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Apellidos
-                </label>
-                <input
-                  type="text"
-                  value={apellidos}
-                  onChange={(e) => setApellidos(e.target.value)}
-                  placeholder="Apellidos"
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                />
-              </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">
+                Apellidos
+              </label>
+              <input
+                type="text"
+                value={apellidos}
+                onChange={(e) => setApellidos(e.target.value)}
+                placeholder="Apellidos"
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              />
             </div>
+          </div>
+          {tipo === 'actualizacion' && (
+            <p className="text-xs text-slate-400">
+              Al cliente le llegará el mismo formulario que diligenció, ya
+              precargado, para que actualice sus datos (no genera una nueva
+              solicitud de crédito). Debe usar el mismo correo con el que se
+              registró.
+            </p>
           )}
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">

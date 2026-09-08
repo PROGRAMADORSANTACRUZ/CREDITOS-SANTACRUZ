@@ -34,16 +34,27 @@ invitacionesRouter.post(
       const apellidos = ((req.body?.apellidos as string | undefined) ?? '').trim()
       const tipo =
         req.body?.tipo === 'actualizacion' ? 'actualizacion' : 'solicitud'
-      const solicitudId =
-        tipo === 'actualizacion' ? Number(req.body?.solicitudId) : null
-      if (
-        tipo === 'actualizacion' &&
-        (!solicitudId || Number.isNaN(solicitudId))
-      ) {
-        res.status(400).json({
-          error: 'Debes seleccionar la solicitud del cliente a actualizar',
-        })
-        return
+      // Actualizacion: se busca la solicitud existente del cliente por su correo
+      // para reenviarle el mismo formulario que diligencio, ya precargado.
+      let solicitudId: number | null = null
+      if (tipo === 'actualizacion') {
+        const previas = await query(
+          `SELECT id
+             FROM vinculacion_clientes
+            WHERE lower(COALESCE(datos->>'email', '')) = $1
+            ORDER BY id DESC
+            LIMIT 1`,
+          [email],
+        )
+        const prev = previas[0] as { id: number } | undefined
+        if (!prev) {
+          res.status(400).json({
+            error:
+              'No existe una solicitud registrada con ese correo para actualizar.',
+          })
+          return
+        }
+        solicitudId = prev.id
       }
       const token = randomBytes(24).toString('hex')
       const expira = new Date(Date.now() + config.invitacionHoras * 3600 * 1000)
