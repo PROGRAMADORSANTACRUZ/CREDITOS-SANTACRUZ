@@ -479,15 +479,6 @@ export function RegistroProveedores({
     }))
   }
 
-  function abrirNuevo() {
-    setEditandoId(null)
-    setDatos(datosVacio())
-    setEstado('Pendiente')
-    setErrorForm(null)
-    setMostrarForm(true)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
   function abrirEdicion(r: RegistroProveedor) {
     setEditandoId(r.id)
     const base = datosVacio()
@@ -593,14 +584,6 @@ export function RegistroProveedores({
             Formato F-DC-001 &mdash; Agropecuaria Santacruz Limitada
           </p>
         </div>
-        {!mostrarForm && (
-          <button
-            onClick={abrirNuevo}
-            className="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-          >
-            + Nuevo registro
-          </button>
-        )}
       </header>
 
       {!mostrarForm && (
