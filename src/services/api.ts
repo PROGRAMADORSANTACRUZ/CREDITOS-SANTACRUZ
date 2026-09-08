@@ -116,12 +116,14 @@ export const api = {
     nombres?: string
     apellidos?: string
     tipo?: 'solicitud' | 'actualizacion'
+    entidad?: 'cliente' | 'proveedor'
     solicitudId?: string
   }): Promise<{
     email: string
     nombres: string
     apellidos: string
     tipo?: string
+    entidad?: string
     link: string
     expira: string
     correoEnviado?: boolean
@@ -139,6 +141,7 @@ export const api = {
     nombres: string
     apellidos: string
     tipo?: string
+    entidad?: string
     datosPrevios?: Record<string, unknown> | null
     clientePrevio?: string
     valido: boolean
@@ -150,6 +153,15 @@ export const api = {
     payload: NuevaVinculacionCliente,
   ): Promise<{ ok: boolean; consecutivo: string }> {
     return pedir(`/invitaciones/${token}/solicitud`, {
+      method: 'POST',
+      body: payload,
+    })
+  },
+  enviarProveedorPorToken(
+    token: string,
+    payload: NuevoRegistroProveedor,
+  ): Promise<{ ok: boolean; consecutivo: string }> {
+    return pedir(`/invitaciones/${token}/proveedor`, {
       method: 'POST',
       body: payload,
     })

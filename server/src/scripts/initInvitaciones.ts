@@ -26,6 +26,12 @@ async function main() {
   await query(
     "ALTER TABLE invitaciones_solicitud ADD COLUMN IF NOT EXISTS tipo VARCHAR(20) NOT NULL DEFAULT 'solicitud'",
   )
+  await query(
+    "ALTER TABLE invitaciones_solicitud ADD COLUMN IF NOT EXISTS entidad VARCHAR(20) NOT NULL DEFAULT 'cliente'",
+  )
+  await query(
+    'ALTER TABLE invitaciones_solicitud ADD COLUMN IF NOT EXISTS proveedor_id INTEGER',
+  )
   console.log('Tabla invitaciones_solicitud lista')
   await pool.end()
 }

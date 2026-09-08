@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { api } from '../services/api'
 import { VinculacionClientes } from './VinculacionClientes'
+import { RegistroProveedores } from './RegistroProveedores'
 
 type Estado = 'cargando' | 'valido' | 'invalido' | 'enviado'
 
@@ -12,6 +13,7 @@ export function SolicitudPublica() {
   const [mensaje, setMensaje] = useState('')
   const [consecutivo, setConsecutivo] = useState('')
   const [tipo, setTipo] = useState<'solicitud' | 'actualizacion'>('solicitud')
+  const [entidad, setEntidad] = useState<'cliente' | 'proveedor'>('cliente')
   const [datosPrevios, setDatosPrevios] = useState<Record<
     string,
     unknown
@@ -25,6 +27,7 @@ export function SolicitudPublica() {
         if (!activo) return
         setEmail(res.email)
         setTipo(res.tipo === 'actualizacion' ? 'actualizacion' : 'solicitud')
+        setEntidad(res.entidad === 'proveedor' ? 'proveedor' : 'cliente')
         setDatosPrevios(res.datosPrevios ?? null)
         setEstado('valido')
       })
@@ -120,18 +123,33 @@ export function SolicitudPublica() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-5xl px-4 py-6">
-        <VinculacionClientes
-          modoPublico={{
-            token,
-            emailCliente: email,
-            tipo,
-            datosPrevios,
-            onEnviado: (cons) => {
-              setConsecutivo(cons)
-              setEstado('enviado')
-            },
-          }}
-        />
+        {entidad === 'proveedor' ? (
+          <RegistroProveedores
+            modoPublico={{
+              token,
+              correoProveedor: email,
+              tipo,
+              datosPrevios,
+              onEnviado: (cons) => {
+                setConsecutivo(cons)
+                setEstado('enviado')
+              },
+            }}
+          />
+        ) : (
+          <VinculacionClientes
+            modoPublico={{
+              token,
+              emailCliente: email,
+              tipo,
+              datosPrevios,
+              onEnviado: (cons) => {
+                setConsecutivo(cons)
+                setEstado('enviado')
+              },
+            }}
+          />
+        )}
       </div>
     </div>
   )

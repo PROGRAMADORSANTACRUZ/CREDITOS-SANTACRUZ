@@ -24,17 +24,26 @@ export async function enviarLinkSolicitud(
   destino: string,
   link: string,
   tipo: 'solicitud' | 'actualizacion' = 'solicitud',
+  entidad: 'cliente' | 'proveedor' = 'cliente',
 ): Promise<void> {
   const esActualizacion = tipo === 'actualizacion'
+  const esProveedor = entidad === 'proveedor'
+  const documento = esProveedor
+    ? 'Registro único de proveedores y contratistas'
+    : 'Solicitud de crédito'
   const intro = esActualizacion
     ? 'Te invitamos a <strong>actualizar tus datos</strong>. Para actualizar tu información, ingresa aquí:'
-    : 'Has sido invitado a diligenciar tu <strong>Solicitud de crédito</strong>. Haz clic en el siguiente botón para completar el formulario:'
+    : `Has sido invitado a diligenciar tu <strong>${documento}</strong>. Haz clic en el siguiente botón para completar el formulario:`
   const textoBoton = esActualizacion
     ? 'Actualizar mis datos'
-    : 'Diligenciar solicitud'
+    : esProveedor
+      ? 'Diligenciar registro'
+      : 'Diligenciar solicitud'
   const asunto = esActualizacion
     ? 'Actualización de datos - Grupo Santacruz'
-    : 'Solicitud de crédito - Grupo Santacruz'
+    : esProveedor
+      ? 'Registro de proveedor - Grupo Santacruz'
+      : 'Solicitud de crédito - Grupo Santacruz'
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#0f172a">
       <h2 style="color:#be123c">Grupo Santacruz</h2>

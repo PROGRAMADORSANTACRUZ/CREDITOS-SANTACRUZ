@@ -4,7 +4,7 @@ import { query } from '../db.js'
 import { requireAuth, requirePermiso } from '../auth.js'
 import { config } from '../config.js'
 import { enviarLinkSolicitud } from '../mailer.js'
-import type { NuevaVinculacionCliente } from '../types.js'
+import type { NuevaVinculacionCliente, NuevoRegistroProveedor } from '../types.js'
 
 export const invitacionesRouter = Router()
 
@@ -34,33 +34,57 @@ invitacionesRouter.post(
       const apellidos = ((req.body?.apellidos as string | undefined) ?? '').trim()
       const tipo =
         req.body?.tipo === 'actualizacion' ? 'actualizacion' : 'solicitud'
-      // Actualizacion: se busca la solicitud existente del cliente por su correo
-      // para reenviarle el mismo formulario que diligencio, ya precargado.
+      const entidad =
+        req.body?.entidad === 'proveedor' ? 'proveedor' : 'cliente'
+      // Actualizacion: se busca el registro existente (cliente o proveedor) por
+      // su correo para reenviarle el mismo formulario que diligencio, precargado.
       let solicitudId: number | null = null
+      let proveedorId: number | null = null
       if (tipo === 'actualizacion') {
-        const previas = await query(
-          `SELECT id
-             FROM vinculacion_clientes
-            WHERE lower(COALESCE(datos->>'email', '')) = $1
-            ORDER BY id DESC
-            LIMIT 1`,
-          [email],
-        )
-        const prev = previas[0] as { id: number } | undefined
-        if (!prev) {
-          res.status(400).json({
-            error:
-              'No existe una solicitud registrada con ese correo para actualizar.',
-          })
-          return
+        if (entidad === 'proveedor') {
+          const previas = await query(
+            `SELECT id
+               FROM registro_proveedores
+              WHERE lower(COALESCE(correo, '')) = $1
+                 OR lower(COALESCE(datos->>'correo', '')) = $1
+              ORDER BY id DESC
+              LIMIT 1`,
+            [email],
+          )
+          const prev = previas[0] as { id: number } | undefined
+          if (!prev) {
+            res.status(400).json({
+              error:
+                'No existe un proveedor registrado con ese correo para actualizar.',
+            })
+            return
+          }
+          proveedorId = prev.id
+        } else {
+          const previas = await query(
+            `SELECT id
+               FROM vinculacion_clientes
+              WHERE lower(COALESCE(datos->>'email', '')) = $1
+              ORDER BY id DESC
+              LIMIT 1`,
+            [email],
+          )
+          const prev = previas[0] as { id: number } | undefined
+          if (!prev) {
+            res.status(400).json({
+              error:
+                'No existe una solicitud registrada con ese correo para actualizar.',
+            })
+            return
+          }
+          solicitudId = prev.id
         }
-        solicitudId = prev.id
       }
       const token = randomBytes(24).toString('hex')
       const expira = new Date(Date.now() + config.invitacionHoras * 3600 * 1000)
       await query(
-        `INSERT INTO invitaciones_solicitud (token, email, nombres, apellidos, asesor, fecha_expira, tipo, solicitud_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        `INSERT INTO invitaciones_solicitud (token, email, nombres, apellidos, asesor, fecha_expira, tipo, solicitud_id, entidad, proveedor_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
         [
           token,
           email,
@@ -70,11 +94,13 @@ invitacionesRouter.post(
           expira,
           tipo,
           solicitudId,
+          entidad,
+          proveedorId,
         ],
       )
       const link = `${config.appUrl}/solicitud/${token}`
       try {
-        await enviarLinkSolicitud(email, link, tipo)
+        await enviarLinkSolicitud(email, link, tipo, entidad)
       } catch (err) {
         // La invitacion queda creada aunque falle el correo. Respondemos 201
         // (no 502) para que ningun proxy intermedio reemplace el JSON por HTML;
@@ -84,6 +110,7 @@ invitacionesRouter.post(
           nombres,
           apellidos,
           tipo,
+          entidad,
           link,
           expira: expira.toISOString(),
           correoEnviado: false,
@@ -99,6 +126,7 @@ invitacionesRouter.post(
         nombres,
         apellidos,
         tipo,
+        entidad,
         link,
         expira: expira.toISOString(),
         correoEnviado: true,
@@ -135,10 +163,12 @@ invitacionesRouter.get('/:token', async (req, res, next) => {
   try {
     const filas = await query(
       `SELECT i.email, i.nombres, i.apellidos, i.estado, i.fecha_expira,
-              i.tipo, i.solicitud_id,
-              v.datos AS datos_previos, v.cliente AS cliente_previo
+              i.tipo, i.solicitud_id, i.entidad, i.proveedor_id,
+              v.datos AS datos_previos, v.cliente AS cliente_previo,
+              p.datos AS datos_previos_prov, p.proveedor AS proveedor_previo
          FROM invitaciones_solicitud i
          LEFT JOIN vinculacion_clientes v ON v.id = i.solicitud_id
+         LEFT JOIN registro_proveedores p ON p.id = i.proveedor_id
         WHERE i.token = $1`,
       [req.params.token],
     )
@@ -156,14 +186,23 @@ invitacionesRouter.get('/:token', async (req, res, next) => {
       return
     }
     const tipo = (inv.tipo as string) ?? 'solicitud'
+    const entidad = (inv.entidad as string) ?? 'cliente'
+    const esProveedor = entidad === 'proveedor'
+    const datosPrevios =
+      tipo === 'actualizacion'
+        ? esProveedor
+          ? (inv.datos_previos_prov ?? null)
+          : (inv.datos_previos ?? null)
+        : null
     res.json({
       email: inv.email,
       nombres: inv.nombres ?? '',
       apellidos: inv.apellidos ?? '',
       tipo,
-      datosPrevios:
-        tipo === 'actualizacion' ? (inv.datos_previos ?? null) : null,
-      clientePrevio: inv.cliente_previo ?? '',
+      entidad,
+      datosPrevios,
+      clientePrevio:
+        (esProveedor ? inv.proveedor_previo : inv.cliente_previo) ?? '',
       valido: true,
     })
   } catch (err) {
@@ -272,6 +311,119 @@ invitacionesRouter.post('/:token/solicitud', async (req, res, next) => {
           SET estado = 'Usada', fecha_uso = now(), solicitud_id = $2
         WHERE id = $1`,
       [inv.id, solicitudId],
+    )
+
+    res.status(201).json({ ok: true, consecutivo })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// El proveedor envia su registro usando el token; crea (o actualiza) el
+// registro_proveedores y marca la invitacion como usada (uso publico, un solo
+// uso).
+invitacionesRouter.post('/:token/proveedor', async (req, res, next) => {
+  try {
+    const token = req.params.token
+    const filas = await query(
+      `SELECT id, estado, fecha_expira, tipo, entidad, proveedor_id
+         FROM invitaciones_solicitud WHERE token = $1 FOR UPDATE`,
+      [token],
+    )
+    const inv = filas[0]
+    if (!inv) {
+      res.status(404).json({ error: 'Enlace no valido' })
+      return
+    }
+    if (inv.entidad !== 'proveedor') {
+      res.status(400).json({ error: 'Este enlace no es de proveedor' })
+      return
+    }
+    if (inv.estado === 'Usada') {
+      res.status(410).json({ error: 'Este enlace ya fue utilizado' })
+      return
+    }
+    if (new Date(inv.fecha_expira as string) < new Date()) {
+      res.status(410).json({ error: 'Este enlace ha expirado' })
+      return
+    }
+
+    const body = req.body as Partial<NuevoRegistroProveedor>
+    if (!body.proveedor || !body.proveedor.trim()) {
+      res.status(400).json({ errores: ['proveedor es obligatorio'] })
+      return
+    }
+
+    // Actualizacion de datos: sobrescribe el registro existente (no crea nuevo).
+    if (inv.tipo === 'actualizacion' && inv.proveedor_id) {
+      const upd = await query(
+        `UPDATE registro_proveedores
+            SET fecha = COALESCE($2, fecha),
+                proveedor = $3,
+                nit = $4,
+                telefono = $5,
+                correo = $6,
+                tipo_proveedor = $7,
+                datos = $8::jsonb
+          WHERE id = $1
+        RETURNING consecutivo`,
+        [
+          inv.proveedor_id,
+          body.fecha || null,
+          body.proveedor.trim(),
+          body.nit?.trim() || null,
+          body.telefono?.trim() || null,
+          body.correo?.trim() || null,
+          body.tipoProveedor?.trim() || null,
+          JSON.stringify(body.datos ?? {}),
+        ],
+      )
+      const consecutivo = (upd[0] as { consecutivo: string })?.consecutivo ?? ''
+      await query(
+        `UPDATE invitaciones_solicitud
+            SET estado = 'Usada', fecha_uso = now()
+          WHERE id = $1`,
+        [inv.id],
+      )
+      res.status(201).json({ ok: true, consecutivo, actualizacion: true })
+      return
+    }
+
+    const seq = await query(
+      `SELECT COALESCE(
+                MAX(CAST(SUBSTRING(consecutivo FROM 3) AS INTEGER)), 0
+              ) + 1 AS next
+         FROM registro_proveedores
+        WHERE consecutivo ~ '^RP[0-9]+$'`,
+    )
+    const next = Number((seq[0] as { next: number }).next) || 1
+    const consecutivo = 'RP' + String(next).padStart(6, '0')
+
+    const ins = await query(
+      `INSERT INTO registro_proveedores
+         (fecha, proveedor, nit, telefono, correo, tipo_proveedor,
+          estado, observaciones, consecutivo, datos)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb) RETURNING id`,
+      [
+        body.fecha || null,
+        body.proveedor.trim(),
+        body.nit?.trim() || null,
+        body.telefono?.trim() || null,
+        body.correo?.trim() || null,
+        body.tipoProveedor?.trim() || null,
+        body.estado?.trim() || 'Pendiente',
+        body.observaciones?.trim() || null,
+        consecutivo,
+        JSON.stringify(body.datos ?? {}),
+      ],
+    )
+    const proveedorId = (ins[0] as { id: number }).id
+
+    await query(
+      `UPDATE invitaciones_solicitud
+          SET estado = 'Usada', fecha_uso = now(), proveedor_id = $2
+        WHERE id = $1`,
+      [inv.id, proveedorId],
     )
 
     res.status(201).json({ ok: true, consecutivo })

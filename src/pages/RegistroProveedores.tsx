@@ -253,7 +253,20 @@ function colorEstado(estado?: string): string {
 const inputClase =
   'w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500'
 
-export function RegistroProveedores() {
+// Modo publico: el proveedor diligencia su registro desde un enlace por correo.
+export interface ModoPublicoProveedor {
+  token: string
+  correoProveedor?: string
+  tipo?: 'solicitud' | 'actualizacion'
+  datosPrevios?: Record<string, unknown> | null
+  onEnviado: (consecutivo: string) => void
+}
+
+export function RegistroProveedores({
+  modoPublico,
+}: {
+  modoPublico?: ModoPublicoProveedor
+} = {}) {
   const [registros, setRegistros] = useState<RegistroProveedor[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -286,7 +299,32 @@ export function RegistroProveedores() {
   }
 
   useEffect(() => {
+    if (modoPublico) {
+      // El proveedor solo diligencia su formulario; no se carga el listado. En
+      // modo actualizacion se precarga el registro que diligencio antes.
+      const base = datosVacio()
+      const prev = (modoPublico.datosPrevios ?? {}) as Partial<FormDatos>
+      setDatos(() => ({
+        ...base,
+        ...prev,
+        accionistas: prev.accionistas ?? base.accionistas,
+        contactoComercial: prev.contactoComercial ?? base.contactoComercial,
+        contactoContable: prev.contactoContable ?? base.contactoContable,
+        contactoLogistica: prev.contactoLogistica ?? base.contactoLogistica,
+        vehiculos: prev.vehiculos ?? base.vehiculos,
+        referenciasComerciales:
+          prev.referenciasComerciales ?? base.referenciasComerciales,
+        referenciasBancarias:
+          prev.referenciasBancarias ?? base.referenciasBancarias,
+        correo: prev.correo || (modoPublico.correoProveedor ?? ''),
+      }))
+      setEstado('Pendiente')
+      setMostrarForm(true)
+      setCargando(false)
+      return
+    }
     void cargar()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const formValido = useMemo(() => datos.razonSocial.trim() !== '', [datos])
@@ -491,6 +529,10 @@ export function RegistroProveedores() {
         setRegistros((prev) =>
           prev.map((r) => (r.id === editandoId ? actualizado : r)),
         )
+      } else if (modoPublico) {
+        const res = await api.enviarProveedorPorToken(modoPublico.token, payload)
+        modoPublico.onEnviado(res.consecutivo)
+        return
       } else {
         const creado = await api.crearRegistroProveedor(payload)
         setRegistros((prev) => [creado, ...prev])
@@ -1367,30 +1409,34 @@ export function RegistroProveedores() {
           {/* Estado (uso interno) + acciones */}
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex flex-wrap items-end gap-4">
-              <Campo label="Estado del registro">
-                <select
-                  value={estado}
-                  onChange={(e) => setEstado(e.target.value)}
-                  className={inputClase}
-                >
-                  {ESTADOS.map((e) => (
-                    <option key={e} value={e}>
-                      {e}
-                    </option>
-                  ))}
-                </select>
-              </Campo>
+              {!modoPublico && (
+                <Campo label="Estado del registro">
+                  <select
+                    value={estado}
+                    onChange={(e) => setEstado(e.target.value)}
+                    className={inputClase}
+                  >
+                    {ESTADOS.map((e) => (
+                      <option key={e} value={e}>
+                        {e}
+                      </option>
+                    ))}
+                  </select>
+                </Campo>
+              )}
               <div className="ml-auto flex items-center gap-3">
                 {errorForm && (
                   <span className="text-sm text-red-600">{errorForm}</span>
                 )}
-                <button
-                  type="button"
-                  onClick={cerrarForm}
-                  className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-                >
-                  Cancelar
-                </button>
+                {!modoPublico && (
+                  <button
+                    type="button"
+                    onClick={cerrarForm}
+                    className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                  >
+                    Cancelar
+                  </button>
+                )}
                 <button
                   type="submit"
                   disabled={!formValido || guardando}
@@ -1398,9 +1444,11 @@ export function RegistroProveedores() {
                 >
                   {guardando
                     ? 'Guardando...'
-                    : editandoId
-                      ? 'Guardar cambios'
-                      : 'Crear registro'}
+                    : modoPublico
+                      ? 'Enviar registro'
+                      : editandoId
+                        ? 'Guardar cambios'
+                        : 'Crear registro'}
                 </button>
               </div>
             </div>
