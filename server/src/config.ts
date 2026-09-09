@@ -25,6 +25,8 @@ export const config = {
   },
   // Horas de validez del link de invitacion al cliente.
   invitacionHoras: Number(process.env.INVITACION_HORAS ?? 72),
+  // Correo del revisor de cartera que recibe aviso de cada registro guardado.
+  correoRevisor: process.env.CORREO_REVISOR ?? 'cartera@carnessantacruz.co',
   // Configuracion SMTP para el envio de correos (Nodemailer).
   smtp: {
     host: process.env.SMTP_HOST ?? '',

@@ -71,3 +71,38 @@ export async function enviarLinkSolicitud(
     html,
   })
 }
+
+// Avisa al revisor de cartera que se guardo un nuevo registro (solicitud o
+// proveedor) para que ingrese a revisarlo.
+export async function enviarAvisoNuevoRegistro(datos: {
+  consecutivo: string
+  nombre: string
+  entidad: 'cliente' | 'proveedor'
+  actualizacion?: boolean
+}): Promise<void> {
+  const esProveedor = datos.entidad === 'proveedor'
+  const que = esProveedor ? 'proveedor' : 'cliente'
+  const accion = datos.actualizacion ? 'actualizó su registro' : 'diligenció una nueva solicitud'
+  const asunto = `Nuevo registro de ${que} (${datos.consecutivo}) - Grupo Santacruz`
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#0f172a">
+      <h2 style="color:#be123c">Grupo Santacruz</h2>
+      <p>Se recibió un nuevo registro para revisión.</p>
+      <ul style="font-size:14px;line-height:1.7">
+        <li><strong>Tipo:</strong> ${esProveedor ? 'Proveedor' : 'Cliente'}</li>
+        <li><strong>Nombre:</strong> ${datos.nombre}</li>
+        <li><strong>Radicado:</strong> ${datos.consecutivo}</li>
+        <li><strong>Acción:</strong> ${accion}</li>
+      </ul>
+      <p style="font-size:13px;color:#64748b">
+        Ingresa al panel de revisión para gestionar la solicitud.
+      </p>
+    </div>`
+
+  await getTransporter().sendMail({
+    from: config.smtp.from,
+    to: config.correoRevisor,
+    subject: asunto,
+    html,
+  })
+}

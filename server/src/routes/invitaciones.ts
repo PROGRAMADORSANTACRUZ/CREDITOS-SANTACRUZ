@@ -3,7 +3,7 @@ import { Router } from 'express'
 import { query } from '../db.js'
 import { requireAuth, requirePermiso } from '../auth.js'
 import { config } from '../config.js'
-import { enviarLinkSolicitud } from '../mailer.js'
+import { enviarLinkSolicitud, enviarAvisoNuevoRegistro } from '../mailer.js'
 import type { NuevaVinculacionCliente, NuevoRegistroProveedor } from '../types.js'
 
 export const invitacionesRouter = Router()
@@ -14,6 +14,20 @@ const COLS_VC = `id, fecha, cliente, documento, telefono, direccion, tipo_person
 
 function esEmail(v: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
+}
+
+// Envia el aviso al revisor sin interrumpir el guardado si el correo falla.
+async function avisarRevisor(datos: {
+  consecutivo: string
+  nombre: string
+  entidad: 'cliente' | 'proveedor'
+  actualizacion?: boolean
+}): Promise<void> {
+  try {
+    await enviarAvisoNuevoRegistro(datos)
+  } catch (err) {
+    console.error('No se pudo avisar al revisor:', err)
+  }
 }
 
 // Crea una invitacion y envia el link al correo del cliente. Solo Asesor/Admin.
@@ -277,6 +291,12 @@ invitacionesRouter.post('/:token/solicitud', async (req, res, next) => {
           WHERE id = $1`,
         [inv.id],
       )
+      await avisarRevisor({
+        consecutivo,
+        nombre: body.cliente.trim(),
+        entidad: inv.entidad === 'proveedor' ? 'proveedor' : 'cliente',
+        actualizacion: true,
+      })
       res.status(201).json({ ok: true, consecutivo, actualizacion: true })
       return
     }
@@ -319,6 +339,12 @@ invitacionesRouter.post('/:token/solicitud', async (req, res, next) => {
         WHERE id = $1`,
       [inv.id, solicitudId],
     )
+
+    await avisarRevisor({
+      consecutivo,
+      nombre: body.cliente.trim(),
+      entidad: inv.entidad === 'proveedor' ? 'proveedor' : 'cliente',
+    })
 
     res.status(201).json({ ok: true, consecutivo })
   } catch (err) {
@@ -395,6 +421,12 @@ invitacionesRouter.post('/:token/proveedor', async (req, res, next) => {
           WHERE id = $1`,
         [inv.id],
       )
+      await avisarRevisor({
+        consecutivo,
+        nombre: body.proveedor.trim(),
+        entidad: 'proveedor',
+        actualizacion: true,
+      })
       res.status(201).json({ ok: true, consecutivo, actualizacion: true })
       return
     }
@@ -435,6 +467,12 @@ invitacionesRouter.post('/:token/proveedor', async (req, res, next) => {
         WHERE id = $1`,
       [inv.id, proveedorId],
     )
+
+    await avisarRevisor({
+      consecutivo,
+      nombre: body.proveedor.trim(),
+      entidad: 'proveedor',
+    })
 
     res.status(201).json({ ok: true, consecutivo })
   } catch (err) {
